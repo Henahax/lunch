@@ -19,24 +19,28 @@
 
 <h1>Mittag</h1>
 
-<!-- Idea, do actual row and subgrid-->
+<!-- Idea, do actual row and subgrid, do KW and daily blocks -->
 
-<div class="grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr] gap-4">
+<div class="grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_auto] gap-4">
 	<div>Restaurant</div>
 	<div class="col-span-5">KW X</div>
+	<div></div>
 
 	<div>Restaurant 0</div>
 	<div class="col-span-5">Meal 0</div>
+	<div>Link</div>
 
 	<div>Restaurant</div>
-	{#each days as day}
+	{#each days as day (day)}
 		<div>{day}</div>
 	{/each}
+	<div></div>
 
-	{#each restaurants as restaurant}
+	{#each restaurants as restaurant (restaurant.name)}
 		<div>{restaurant.name}</div>
-		{#each restaurant.meals as meal}
+		{#each restaurant.meals as meal (meal)}
 			<div>{meal}</div>
 		{/each}
+		<div>Link</div>
 	{/each}
 </div>
