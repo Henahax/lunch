@@ -31,6 +31,9 @@ jobs:
 
       - name: Build application
         run: npm run build
+        env:
+          # SvelteKit validates required env vars while building; this value is not used at runtime.
+          DATABASE_URL: /tmp/lunch-build.db
 
       - name: Read application version
         id: version

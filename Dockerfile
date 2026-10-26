@@ -10,6 +10,8 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+# SvelteKit validates required env vars during build; the runtime container supplies the real path.
+ENV DATABASE_URL=/tmp/lunch-build.db
 RUN npm run build
 RUN npm prune --omit=dev --ignore-scripts
 
