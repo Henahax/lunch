@@ -47,6 +47,7 @@
 		"#lib/*": "./src/lib/*"
 	},
 	"dependencies": {
+		"@fortawesome/fontawesome-free": "^7.3.1",
 		"better-sqlite3": "^13.0.2"
 	}
 }
