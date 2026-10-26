@@ -1,6 +1,10 @@
 # Project Instructions
 
-<!-- Add only durable project-specific rules that are not already clear from the code or documentation. -->
+## Plan maintenance
+
+- Treat `README.md` as the living implementation plan. Update it when project decisions or implementation progress change the plan.
+- After completing a planned step, mark it complete in the README or remove it if a completion checklist no longer adds value.
+- Remove or revise steps that are no longer needed; keep remaining steps actionable and in the intended order.
 
 ## Shared guidance
 

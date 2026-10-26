@@ -1,0 +1,14 @@
+node_modules
+.git
+.gitignore
+*.log
+.env
+.env.*
+!.env.example
+.svelte-kit
+dist
+build
+coverage
+local.db
+*.db-shm
+*.db-wal
