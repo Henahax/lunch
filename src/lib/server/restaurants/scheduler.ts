@@ -10,7 +10,7 @@ import {
 import { khanitthaSource, noonSource, riedersteinSource } from './sources';
 
 const timeZone = 'Europe/Berlin';
-const runHour = 6;
+const runHour = 8;
 let started = false;
 let running = false;
 
@@ -119,7 +119,7 @@ function scheduleNextRun() {
 export function startImportScheduler() {
 	if (started) return;
 	started = true;
-	console.info('Starting menu imports on startup and daily at 06:00 Europe/Berlin.');
+	console.info('Starting menu imports on startup and daily at 08:00 Europe/Berlin.');
 	void runImports();
 	scheduleNextRun();
 }
