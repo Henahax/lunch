@@ -1,12 +1,12 @@
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { storeRestaurantMenus, type ImportedMenuItem, type ImportedMenuPlan } from './store-menu';
+import { extractPdfLines } from './pdf-text';
 
 const sourceUrl = 'https://noon-food.com/karte/wochenspeisekarte.pdf';
 const restaurant = { slug: 'noon-food', name: 'noon food' };
 const weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
 const dayIndexes = new Map(weekdays.map((day, index) => [day.toLocaleUpperCase('de-DE'), index]));
 
-type PdfTextItem = { str: string; transform: number[]; width: number };
 type WeeklyItem = ImportedMenuItem & { category: string };
 
 function cleanText(value: string): string {
@@ -33,51 +33,6 @@ function normalizeLabel(value: string): string {
 		return value.replace(/^V\s*e\s*g\s*e\s*t\s*a\s*r\s*i\s*s\s*c\s*h\s*:/i, 'Vegetarisch:');
 	}
 	return cleanText(value);
-}
-
-function extractPageLines(items: unknown[]): string[] {
-	const textItems = items.filter(
-		(item): item is PdfTextItem =>
-			typeof item === 'object' &&
-			item !== null &&
-			'str' in item &&
-			'transform' in item &&
-			typeof item.str === 'string' &&
-			Array.isArray(item.transform) &&
-			'width' in item &&
-			typeof item.width === 'number'
-	);
-	const rows: { y: number; items: PdfTextItem[] }[] = [];
-
-	for (const item of textItems) {
-		if (!item.str.trim()) continue;
-		const y = item.transform[5];
-		let row = rows.find((candidate) => Math.abs(candidate.y - y) < 0.75);
-		if (!row) {
-			row = { y, items: [] };
-			rows.push(row);
-		}
-		row.items.push(item);
-	}
-
-	return rows
-		.sort((left, right) => right.y - left.y)
-		.map((row) => {
-			const sorted = row.items.sort((left, right) => left.transform[4] - right.transform[4]);
-			let line = '';
-			let previous: PdfTextItem | undefined;
-			for (const item of sorted) {
-				if (!item.str) continue;
-				if (previous) {
-					const gap = item.transform[4] - (previous.transform[4] + previous.width);
-					if (gap > 0.8 && !line.endsWith(' ') && !item.str.startsWith(' ')) line += ' ';
-				}
-				line += item.str;
-				previous = item;
-			}
-			return normalizeLabel(line);
-		})
-		.filter(Boolean);
 }
 
 function berlinDate(date: Date): string {
@@ -305,7 +260,7 @@ export async function importNoonMenu(now = new Date()) {
 
 		const page = await document.getPage(1);
 		const content = await page.getTextContent();
-		plans = parseMenuLines(extractPageLines(content.items), currentWeek);
+		plans = parseMenuLines(extractPdfLines(content.items).map(normalizeLabel), currentWeek);
 		page.cleanup();
 	} finally {
 		await loadingTask.destroy();

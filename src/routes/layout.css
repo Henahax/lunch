@@ -5,4 +5,92 @@
 
 :root {
 	color-scheme: dark;
+	interpolate-size: allow-keywords;
+}
+
+@supports selector(details::details-content) {
+	details::details-content {
+		block-size: 0;
+		overflow: clip;
+		transition:
+			block-size 250ms ease,
+			content-visibility 250ms allow-discrete;
+	}
+
+	details[open]::details-content {
+		block-size: auto;
+	}
+}
+
+dialog.drawer {
+	opacity: 0;
+	transform: translateX(-100%);
+	transition:
+		opacity 250ms ease,
+		transform 250ms ease,
+		display 250ms allow-discrete,
+		overlay 250ms allow-discrete;
+}
+
+dialog.drawer[open] {
+	opacity: 1;
+	transform: translateX(0);
+}
+
+dialog.drawer::backdrop {
+	background-color: rgb(0 0 0 / 0);
+	transition:
+		background-color 250ms ease,
+		display 250ms allow-discrete,
+		overlay 250ms allow-discrete;
+}
+
+dialog.drawer[open]::backdrop {
+	background-color: rgb(0 0 0 / 45%);
+}
+
+@starting-style {
+	dialog.drawer[open] {
+		opacity: 0;
+		transform: translateX(-100%);
+	}
+
+	dialog.drawer[open]::backdrop {
+		background-color: rgb(0 0 0 / 0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	details::details-content {
+		transition: none;
+	}
+
+	dialog.drawer,
+	dialog.drawer::backdrop {
+		transition: none;
+	}
+}
+
+button {
+	cursor: pointer;
+}
+
+button:not(:disabled),
+a,
+summary {
+	transition: opacity 150ms ease;
+}
+
+button:not(:disabled):hover,
+a:hover,
+summary:hover {
+	opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	button:not(:disabled),
+	a,
+	summary {
+		transition: none;
+	}
 }

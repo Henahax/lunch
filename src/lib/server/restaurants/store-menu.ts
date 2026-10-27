@@ -25,13 +25,14 @@ export function storeRestaurantMenus(
 	restaurant: RestaurantIdentity,
 	sourceUrl: string,
 	plans: ImportedMenuPlan[],
-	fetchedAt: number
+	fetchedAt: number,
+	restaurantUrl = sourceUrl
 ) {
 	if (plans.length === 0) throw new Error('Der Import enthält keine Speisepläne.');
 
 	return db.transaction((tx) => {
 		tx.insert(restaurants)
-			.values({ ...restaurant, sourceUrl })
+			.values({ ...restaurant, sourceUrl: restaurantUrl })
 			.onConflictDoNothing({ target: restaurants.slug })
 			.run();
 

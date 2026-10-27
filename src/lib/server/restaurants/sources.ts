@@ -11,3 +11,9 @@ export const noonSource: ImportSource = {
 	name: 'noon food',
 	url: 'https://noon-food.com/karte/wochenspeisekarte.pdf'
 };
+
+export const riedersteinSource: ImportSource = {
+	slug: 'zum-riederstein',
+	name: 'Zum Riederstein',
+	url: 'https://www.zumriederstein.de/'
+};
