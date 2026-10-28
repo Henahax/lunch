@@ -32,3 +32,4 @@ Eine Seite für die aktuellen Mittagsgerichte teilnehmender Restaurants.
 - [ ] Open-Source
 - [ ] CSS, moderne Media Queries
 - [ ] UI Redesign
+- [ ] Restaurants ausblenden
