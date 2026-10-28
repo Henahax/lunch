@@ -13,6 +13,14 @@ function cleanText(value: string): string {
 	return value.replace(/\s+/g, ' ').trim();
 }
 
+function stripAllergenCodes(value: string): string {
+	return cleanText(value)
+		.replace(/\s*\(\s*[A-Z][A-Z0-9]*(?:\s*,\s*[A-Z][A-Z0-9]*)*\s*\)\s*/g, ' ')
+		.replace(/\s+([,.;:!?])/g, '$1')
+		.replace(/\s+/g, ' ')
+		.trim();
+}
+
 function normalizeLabel(value: string): string {
 	const compact = cleanText(value).replace(/\s/g, '').toLocaleUpperCase('de-DE');
 	const labels: Record<string, string> = {
@@ -116,7 +124,8 @@ function parseMenuLines(lines: string[], week: { year: number; week: number }): 
 	};
 
 	for (const rawLine of lines) {
-		const line = normalizeLabel(rawLine);
+		const line = normalizeLabel(stripAllergenCodes(rawLine));
+		if (!line) continue;
 		const day = isWeekday(line);
 		if (day !== undefined) {
 			flushWeekly();
@@ -151,7 +160,12 @@ function parseMenuLines(lines: string[], week: { year: number; week: number }): 
 				continue;
 			}
 			if (dailyCategory && !/^Tagesgerichte$/i.test(line)) {
-				dayItems[dayIndex].push({ code: '', name: dailyCategory, description: line });
+				dayItems[dayIndex].push({
+					code: '',
+					category: dailyCategory,
+					name: line,
+					description: ''
+				});
 			}
 			continue;
 		}

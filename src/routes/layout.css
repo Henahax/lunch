@@ -8,6 +8,13 @@
 	interpolate-size: allow-keywords;
 }
 
+.page-header {
+	position: sticky;
+	top: 0;
+	z-index: 20;
+	background-color: Canvas;
+}
+
 @supports selector(details::details-content) {
 	details::details-content {
 		block-size: 0;
@@ -57,6 +64,28 @@ dialog.drawer[open]::backdrop {
 
 	dialog.drawer[open]::backdrop {
 		background-color: rgb(0 0 0 / 0);
+	}
+}
+
+@media (max-width: 639px) {
+	dialog.drawer {
+		top: auto;
+		bottom: 0;
+		width: 100%;
+		max-width: none;
+		height: min(80dvh, 44rem);
+		max-height: 80dvh;
+		transform: translateY(100%);
+	}
+
+	dialog.drawer[open] {
+		transform: translateY(0);
+	}
+
+	@starting-style {
+		dialog.drawer[open] {
+			transform: translateY(100%);
+		}
 	}
 }
 

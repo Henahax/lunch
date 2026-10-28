@@ -3,6 +3,16 @@ import type { PageServerLoad } from './$types';
 import { db } from '../lib/server/db';
 import { menuItems, menus, restaurants, sourceImportStatus } from '../lib/server/db/schema';
 
+// Set the restaurant display order here using their slugs. Unlisted restaurants follow alphabetically.
+const restaurantDisplayOrder = [
+	'khanittha',
+	'zum-riederstein',
+	'bindaas',
+	'noon-food',
+	'vinzenzmurr'
+
+];
+
 function currentWeekRange(): { monday: string; friday: string } {
 	const berlinDate = new Intl.DateTimeFormat('en-CA', {
 		timeZone: 'Europe/Berlin',
@@ -27,6 +37,7 @@ export const load: PageServerLoad = async () => {
 	const rows = await db
 		.select({
 			restaurantId: restaurants.id,
+			restaurantSlug: restaurants.slug,
 			restaurantName: restaurants.name,
 			restaurantUrl: restaurants.sourceUrl,
 			menuId: menus.id,
@@ -55,6 +66,7 @@ export const load: PageServerLoad = async () => {
 		string,
 		{
 			id: string;
+			slug: string;
 			restaurantName: string;
 			restaurantUrl: string;
 			menus: {
@@ -78,6 +90,7 @@ export const load: PageServerLoad = async () => {
 		if (!restaurant) {
 			restaurant = {
 				id: row.restaurantId,
+				slug: row.restaurantSlug,
 				restaurantName: row.restaurantName,
 				restaurantUrl: row.restaurantUrl,
 				menus: []
@@ -97,20 +110,29 @@ export const load: PageServerLoad = async () => {
 			restaurant.menus.push(menu);
 		}
 
-		if (row.itemId && row.name && row.description) {
+		if (row.itemId && row.name) {
 			menu.items.push({
 				id: row.itemId,
 				code: row.code ?? '',
 				category: row.category,
 				name: row.name,
-				description: row.description
+				description: row.description ?? ''
 			});
 		}
 	}
 
 	return {
 		weekStart: monday,
-		restaurants: [...groupedRestaurants.values()],
+		restaurants: [...groupedRestaurants.values()].sort((left, right) => {
+			const leftIndex = restaurantDisplayOrder.indexOf(left.slug);
+			const rightIndex = restaurantDisplayOrder.indexOf(right.slug);
+			if (leftIndex === -1 && rightIndex === -1) {
+				return left.restaurantName.localeCompare(right.restaurantName, 'de');
+			}
+			if (leftIndex === -1) return 1;
+			if (rightIndex === -1) return -1;
+			return leftIndex - rightIndex;
+		}),
 		importStatuses
 	};
 };

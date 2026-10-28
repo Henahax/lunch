@@ -78,15 +78,15 @@ The unique index on (`restaurant_id`, `menu_type`, `valid_from`) makes importer 
 
 Ordered dishes or offers belonging to a menu.
 
-| Column        | Meaning                                                          |
-| ------------- | ---------------------------------------------------------------- |
-| `id`          | UUID primary key.                                                |
-| `menu_id`     | Parent menu; deleting the menu cascades to its items.            |
-| `code`        | Optional source code, stored as an empty string when absent.     |
-| `category`    | Optional grouping or heading, such as a bowl category.           |
-| `name`        | Dish or offer name.                                              |
-| `description` | Normalized description, including relevant options or additions. |
-| `position`    | Zero-based display order within the menu.                        |
+| Column        | Meaning                                                                            |
+| ------------- | ---------------------------------------------------------------------------------- |
+| `id`          | UUID primary key.                                                                  |
+| `menu_id`     | Parent menu; deleting the menu cascades to its items.                              |
+| `code`        | Optional source code, stored as an empty string when absent.                       |
+| `category`    | Optional section or grouping label, such as a bowl, curry, or daily meal category. |
+| `name`        | Dish or offer name.                                                                |
+| `description` | Normalized description, including relevant options or additions.                   |
+| `position`    | Zero-based display order within the menu.                                          |
 
 The unique index on (`menu_id`, `position`) preserves one ordered list per menu. Import replaces a menu's item list transactionally.
 
@@ -105,7 +105,7 @@ Latest operational status for each import source. A source may represent a resta
 
 ## Import and persistence behavior
 
-1. Each source parser converts its website or PDF into normalized menu plans and ordered items.
+1. Each source parser converts its website or PDF into normalized menu plans and ordered items, removing source-only allergen markers from names and descriptions when present. Offers valid on multiple individual weekdays are stored in one daily menu per applicable date; offers available throughout the week remain a weekly menu.
 2. A transaction upserts the restaurant and each menu by restaurant, type, and start date.
 3. For each menu, the importer replaces its item rows in source order. If any write fails, the transaction rolls back.
 4. Import status records attempts, the last successful timestamp and counts, or a failure indicator. A failed attempt does not erase the last successful timestamp or counts.

@@ -1,13 +1,21 @@
 import { importKhanitthaMenu } from './khanittha';
 import { importNoonMenu } from './noon';
 import { importRiedersteinMenu } from './riederstein';
+import { importVinzenzmurrMenu } from './vinzenzmurr';
+import { importBindaasMenu } from './bindaas';
 import {
 	recordImportAttempt,
 	recordImportFailure,
 	recordImportSuccess,
 	type ImportSource
 } from './import-status';
-import { khanitthaSource, noonSource, riedersteinSource } from './sources';
+import {
+	bindaasSource,
+	khanitthaSource,
+	noonSource,
+	riedersteinSource,
+	vinzenzmurrSource
+} from './sources';
 
 const timeZone = 'Europe/Berlin';
 const runHour = 8;
@@ -102,6 +110,8 @@ async function runImports() {
 		await runSource(khanitthaSource, importKhanitthaMenu);
 		await runSource(noonSource, importNoonMenu);
 		await runSource(riedersteinSource, importRiedersteinMenu);
+		await runSource(vinzenzmurrSource, importVinzenzmurrMenu);
+		await runSource(bindaasSource, importBindaasMenu);
 	} finally {
 		running = false;
 	}
