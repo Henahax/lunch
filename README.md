@@ -30,4 +30,5 @@ Eine Seite für die aktuellen Mittagsgerichte teilnehmender Restaurants.
 - [ ] Header verbessern
 - [ ] Footer
 - [ ] Open-Source
+- [ ] CSS, moderne Media Queries
 - [ ] UI Redesign
