@@ -33,3 +33,4 @@ Eine Seite für die aktuellen Mittagsgerichte teilnehmender Restaurants.
 - [ ] CSS, moderne Media Queries
 - [ ] UI Redesign
 - [ ] Restaurants ausblenden
+- [ ] Khanitta import fehlgeschlagen prüfen
