@@ -25,3 +25,9 @@ Eine Seite für die aktuellen Mittagsgerichte teilnehmender Restaurants.
 - [ ] Den PDF-Import für Zum Riederstein bei Gelegenheit weiter verbessern; aktuell werden noch nicht alle Gerichte zuverlässig erkannt.
 - [ ] Für Lieblingsgerichte festlegen, ob und wann Browser- oder Push-Erinnerungen kommen sollen, und den gewählten Weg umsetzen.
 - [ ] Optional Favoriten zwischen Geräten synchronisieren, falls dafür später Bedarf besteht.
+- [ ] Weitere Restaurants: Bindaas, vinzenzmurr, Zeller (Endgegner)
+- [ ] Link-Kacheln mit weiteren Imbissen und Restaurants in der Gegend
+- [ ] Header verbessern
+- [ ] Footer
+- [ ] Open-Source
+- [ ] UI Redesign
