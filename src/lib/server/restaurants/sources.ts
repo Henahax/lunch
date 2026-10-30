@@ -2,7 +2,7 @@ import type { ImportSource } from './import-status';
 
 export const khanitthaSource: ImportSource = {
 	slug: 'khanittha',
-	name: 'Khanittha im Werksviertel',
+	name: 'Khanittha',
 	url: 'https://khanittha.de/'
 };
 
@@ -26,6 +26,6 @@ export const vinzenzmurrSource: ImportSource = {
 
 export const bindaasSource: ImportSource = {
 	slug: 'bindaas',
-	name: 'Bindaas Werksviertel',
+	name: 'Bindaas',
 	url: 'https://www.bindaas.de/de/werksviertel'
 };

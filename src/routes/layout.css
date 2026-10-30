@@ -4,15 +4,254 @@
 @plugin '@tailwindcss/typography';
 
 :root {
+	--color-grey: #d5d5d5;
+	--color-grey-light: #e2e2e2;
+	--color-grey-dark: #9b9b9b;
+
+	--color-industrial: #112033;
+	--color-industrial-light: #707985;
+	--color-industrial-dark: #414d5c;
+
+	--color-business: #4265b2;
+	--color-business-light: #6884bc;
+	--color-business-dark: #324c80;
+
+	--color-service: #fdce0d;
+	--color-service-light: #fbe99e;
+	--color-service-dark: #9e8001;
+
+	--color-tech: #21b7b3;
+	--color-tech-light: #74d0cd;
+	--color-tech-dark: #198481;
+
+	--color-primary: var(--color-business);
+	--color-primary-light: var(--color-business-light);
+	--color-primary-dark: var(--color-business-dark);
+	--color-secondary: var(--color-industrial-light);
+	--color-accent: var(--color-tech);
+	--color-highlight: var(--color-service);
+	--color-background: #171b21;
+	--color-surface: #20262f;
+	--color-surface-muted: #29323e;
+	--color-text: var(--color-grey-light);
+	--color-text-muted: var(--color-grey-dark);
+	--color-border: var(--color-secondary);
+	--color-favorite: #ff7180;
+}
+
+:root {
 	color-scheme: dark;
 	interpolate-size: allow-keywords;
+	font-family: 'Cabin', Arial, sans-serif;
+}
+
+body {
+	background-color: var(--color-background);
+	color: var(--color-text);
 }
 
 .page-header {
 	position: sticky;
 	top: 0;
 	z-index: 20;
-	background-color: Canvas;
+	background-color: var(--color-background);
+	color: var(--color-text);
+}
+
+.ui-button,
+.other-restaurants-link {
+	border-color: var(--color-border);
+	background-color: var(--color-surface);
+	color: var(--color-text);
+	box-shadow: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.25);
+	transition:
+		box-shadow 150ms ease,
+		border-color 150ms ease,
+		background-color 150ms ease,
+		color 150ms ease;
+}
+
+.ui-button:hover,
+.other-restaurants-link:hover {
+	border-color: var(--color-primary-light);
+	background-color: color-mix(in srgb, var(--color-surface-muted) 80%, white);
+	color: #ffffff;
+	box-shadow:
+		0 0.25rem 0.75rem -0.0625rem rgba(0, 0, 0, 0.4),
+		0 0 0.75rem -0.0625rem color-mix(in srgb, var(--color-primary-light) 45%, transparent);
+}
+
+.ui-input {
+	border-color: var(--color-border);
+	background-color: var(--color-background);
+	color: var(--color-text);
+}
+
+.drawer {
+	border-color: var(--color-border);
+	background-color: var(--color-surface);
+	color: var(--color-text);
+}
+
+.drawer-panel {
+	border-color: var(--color-border);
+}
+
+.drawer-header {
+	border-color: var(--color-border);
+}
+
+.restaurant-card {
+	border-color: var(--color-border);
+	background-color: var(--color-surface);
+	color: var(--color-text);
+	box-shadow:
+		0 0.25rem 1.25rem -0.125rem rgba(0, 0, 0, 0.45),
+		inset 0 0.0625rem 0 0 rgba(255, 255, 255, 0.06);
+	transition:
+		box-shadow 200ms ease,
+		border-color 200ms ease;
+}
+
+.restaurant-card:hover {
+	border-color: color-mix(in srgb, var(--color-primary-light) 60%, var(--color-border));
+	box-shadow:
+		0 0.375rem 1.5rem -0.125rem rgba(0, 0, 0, 0.55),
+		0 0 1rem -0.25rem color-mix(in srgb, var(--color-primary) 30%, transparent),
+		inset 0 0.0625rem 0 0 rgba(255, 255, 255, 0.1);
+}
+
+.restaurant-card__summary {
+	color: var(--color-text);
+	border-radius: 0.375rem 0.375rem 0 0;
+	list-style: none;
+	transition:
+		color 150ms ease,
+		background-color 150ms ease;
+}
+
+.restaurant-card__summary::-webkit-details-marker {
+	display: none;
+}
+
+.restaurant-card__summary::before {
+	content: '+';
+	display: inline-block;
+	width: 1em;
+	font-weight: 700;
+	font-size: 1.5rem;
+	text-align: center;
+	color: var(--color-text-muted);
+	transition: color 150ms ease;
+}
+
+details.restaurant-card[open] > .restaurant-card__summary::before {
+	content: '\2212'; /* minus sign */
+}
+
+.restaurant-card__summary:hover {
+	color: #ffffff;
+	background-color: color-mix(in srgb, var(--color-surface-muted) 60%, transparent);
+}
+
+.restaurant-card__external-link {
+	border-color: var(--color-border);
+}
+
+.restaurant-card__external-link:hover {
+	border-color: var(--color-primary-light);
+	background-color: color-mix(in srgb, var(--color-surface-muted) 75%, white);
+	color: #ffffff;
+}
+
+.menu-section-title {
+	color: var(--color-primary-light);
+}
+
+.menu-card {
+	background-color: var(--color-surface-muted);
+	border: 0.0625rem solid color-mix(in srgb, var(--color-border) 40%, transparent);
+	box-shadow: 0 0.125rem 0.5rem -0.0625rem rgba(0, 0, 0, 0.25);
+	transition:
+		box-shadow 200ms ease,
+		border-color 200ms ease,
+		transform 150ms ease;
+}
+
+.menu-card:hover {
+	border-color: color-mix(in srgb, var(--color-accent) 50%, var(--color-border));
+	box-shadow:
+		0 0.25rem 0.75rem -0.0625rem rgba(0, 0, 0, 0.4),
+		0 0 0.625rem -0.125rem color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+.menu-day--today {
+	border-color: var(--color-border);
+	box-shadow:
+		0 0.1875rem 0.625rem -0.0625rem rgba(0, 0, 0, 0.35),
+		inset 0 0.0625rem 0 0 rgba(255, 255, 255, 0.04);
+}
+
+.menu-day__title {
+	color: var(--color-primary-light);
+}
+
+.menu-day--today .menu-day__title {
+	border-block-end: 0.125rem solid var(--color-highlight);
+	padding-block-end: 0.35rem;
+}
+
+.menu-item--favorite {
+	border-radius: 0.375rem;
+	border: 0.0625rem solid color-mix(in srgb, var(--color-favorite) 50%, transparent);
+	background-color: color-mix(in srgb, var(--color-favorite) 8%, var(--color-surface-muted));
+	box-shadow:
+		0 0.125rem 0.5rem rgba(0, 0, 0, 0.2),
+		0 0 0.875rem -0.0625rem color-mix(in srgb, var(--color-favorite) 35%, transparent),
+		inset 0 0 0.375rem -0.0625rem color-mix(in srgb, var(--color-favorite) 15%, transparent);
+	transition:
+		box-shadow 200ms ease,
+		border-color 200ms ease;
+}
+
+.menu-item--daily.menu-item--favorite {
+	padding: 0.375rem 0.5rem;
+}
+
+.menu-item--favorite:hover {
+	border-color: var(--color-favorite);
+	box-shadow:
+		0 0.1875rem 0.75rem rgba(0, 0, 0, 0.3),
+		0 0 1.125rem 0 color-mix(in srgb, var(--color-favorite) 45%, transparent),
+		inset 0 0 0.5rem 0 color-mix(in srgb, var(--color-favorite) 20%, transparent);
+}
+
+.menu-item__category {
+	color: var(--color-accent);
+}
+
+.menu-item__description,
+.menu-item__empty,
+.menu-period {
+	color: var(--color-text-muted);
+}
+
+.menu-item__favorite {
+	color: var(--color-favorite);
+}
+
+.restaurant-sort-row,
+.other-restaurants-grid {
+	border-color: var(--color-border);
+	background-color: var(--color-surface-muted);
+}
+
+.restaurant-sort-row input[type='checkbox'] {
+	accent-color: var(--color-primary);
+}
+
+:focus-visible {
+	outline: 1px solid var(--color-highlight);
 }
 
 @supports selector(details::details-content) {
@@ -98,28 +337,23 @@ dialog.drawer[open]::backdrop {
 	dialog.drawer::backdrop {
 		transition: none;
 	}
-}
 
-button {
-	cursor: pointer;
-}
-
-button:not(:disabled),
-a,
-summary {
-	transition: opacity 150ms ease;
-}
-
-button:not(:disabled):hover,
-a:hover,
-summary:hover {
-	opacity: 0.7;
-}
-
-@media (prefers-reduced-motion: reduce) {
-	button:not(:disabled),
-	a,
-	summary {
-		transition: none;
+	.restaurant-card,
+	.restaurant-card__summary,
+	.menu-card,
+	.menu-item--favorite,
+	.ui-button,
+	.other-restaurants-link {
+		transition: none !important;
+		transform: none !important;
 	}
+}
+
+footer {
+	color: var(--color-text-muted);
+}
+
+button,
+[type='checkbox'] {
+	cursor: pointer;
 }

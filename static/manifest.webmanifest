@@ -1,0 +1,25 @@
+{
+	"id": "/",
+	"name": "Mittagessen Beta",
+	"short_name": "Lunch",
+	"description": "Mittagsgerichte und Wochenangebote in deiner Nähe.",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"background_color": "#242424",
+	"theme_color": "#242424",
+	"icons": [
+		{
+			"src": "/icons/lunch-192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any maskable"
+		},
+		{
+			"src": "/icons/lunch-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any maskable"
+		}
+	]
+}
