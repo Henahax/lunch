@@ -5,7 +5,7 @@ import { storeRestaurantMenus, type ImportedMenuItem } from './store-menu';
 const sourceUrl = 'https://khanittha.de/';
 const restaurant = {
 	slug: 'khanittha',
-	name: 'Khanittha im Werksviertel'
+	name: 'Khanittha'
 };
 
 export type ImportedWeeklyMenu = {
@@ -57,7 +57,7 @@ function parseValidityPeriod(title: string, now: Date): { validFrom: string; val
 
 	return candidates.reduce((closest, candidate) =>
 		distanceToRange(today, candidate.validFrom, candidate.validUntil) <
-		distanceToRange(today, closest.validFrom, closest.validUntil)
+			distanceToRange(today, closest.validFrom, closest.validUntil)
 			? candidate
 			: closest
 	);

@@ -264,9 +264,9 @@ export async function importNoonMenu(now = new Date()) {
 		}
 
 		const age = now.getTime() - sourceDate.getTime();
-		if (age < -86_400_000 || age > 7 * 86_400_000) {
+		if (age < -86_400_000 || age > 14 * 86_400_000) {
 			throw new Error(
-				'Die PDF ist älter als sieben Tage oder ihr Aktualisierungsdatum liegt in der Zukunft.'
+				'Die PDF ist älter als 14 Tage oder ihr Aktualisierungsdatum liegt in der Zukunft.'
 			);
 		}
 

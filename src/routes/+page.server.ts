@@ -4,13 +4,14 @@ import { db } from '../lib/server/db';
 import { menuItems, menus, restaurants, sourceImportStatus } from '../lib/server/db/schema';
 
 // Set the restaurant display order here using their slugs. Unlisted restaurants follow alphabetically.
+const restaurantOrderCookieName = 'lunch-restaurant-order';
+const restaurantCollapsedCookieName = 'lunch-collapsed-restaurants';
 const restaurantDisplayOrder = [
 	'khanittha',
 	'zum-riederstein',
 	'bindaas',
 	'noon-food',
 	'vinzenzmurr'
-
 ];
 
 function currentWeekRange(): { monday: string; friday: string } {
@@ -28,7 +29,7 @@ function currentWeekRange(): { monday: string; friday: string } {
 	return { monday, friday: today.toISOString().slice(0, 10) };
 }
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ cookies }) => {
 	const { monday, friday } = currentWeekRange();
 	const importStatuses = await db
 		.select()
@@ -121,18 +122,52 @@ export const load: PageServerLoad = async () => {
 		}
 	}
 
+	const defaultRestaurants = [...groupedRestaurants.values()].sort((left, right) => {
+		const leftIndex = restaurantDisplayOrder.indexOf(left.slug);
+		const rightIndex = restaurantDisplayOrder.indexOf(right.slug);
+		if (leftIndex === -1 && rightIndex === -1) {
+			return left.restaurantName.localeCompare(right.restaurantName, 'de');
+		}
+		if (leftIndex === -1) return 1;
+		if (rightIndex === -1) return -1;
+		return leftIndex - rightIndex;
+	});
+	let savedOrder: unknown;
+	try {
+		savedOrder = JSON.parse(cookies.get(restaurantOrderCookieName) ?? '[]');
+	} catch {
+		savedOrder = [];
+	}
+	const availableSlugs = new Set(defaultRestaurants.map((restaurant) => restaurant.slug));
+	const validSavedOrder = Array.isArray(savedOrder)
+		? [...new Set(savedOrder.filter((slug): slug is string => typeof slug === 'string'))].filter(
+			(slug) => availableSlugs.has(slug)
+		)
+		: [];
+	const completeOrder = [
+		...validSavedOrder,
+		...defaultRestaurants
+			.map((restaurant) => restaurant.slug)
+			.filter((slug) => !validSavedOrder.includes(slug))
+	];
+	const orderIndex = new Map(completeOrder.map((slug, index) => [slug, index]));
+
+	let savedCollapsedSlugs: unknown;
+	try {
+		savedCollapsedSlugs = JSON.parse(cookies.get(restaurantCollapsedCookieName) ?? '[]');
+	} catch {
+		savedCollapsedSlugs = [];
+	}
+	const collapsedSlugs = Array.isArray(savedCollapsedSlugs)
+		? savedCollapsedSlugs.filter((slug): slug is string => typeof slug === 'string')
+		: [];
+
 	return {
 		weekStart: monday,
-		restaurants: [...groupedRestaurants.values()].sort((left, right) => {
-			const leftIndex = restaurantDisplayOrder.indexOf(left.slug);
-			const rightIndex = restaurantDisplayOrder.indexOf(right.slug);
-			if (leftIndex === -1 && rightIndex === -1) {
-				return left.restaurantName.localeCompare(right.restaurantName, 'de');
-			}
-			if (leftIndex === -1) return 1;
-			if (rightIndex === -1) return -1;
-			return leftIndex - rightIndex;
-		}),
+		restaurants: defaultRestaurants.sort(
+			(left, right) => orderIndex.get(left.slug)! - orderIndex.get(right.slug)!
+		),
+		collapsedSlugs,
 		importStatuses
 	};
 };

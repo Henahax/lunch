@@ -2,6 +2,12 @@
 	import { onMount } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { SvelteDate, SvelteSet } from 'svelte/reactivity';
+	import FavoritesDrawer from '#lib/components/FavoritesDrawer.svelte';
+	import InfoDrawer from '#lib/components/InfoDrawer.svelte';
+	import OtherRestaurants from '#lib/components/OtherRestaurants.svelte';
+	import PageHeader from '#lib/components/PageHeader.svelte';
+	import RestaurantCard from '#lib/components/RestaurantCard.svelte';
+	import RestaurantSettingsDrawer from '#lib/components/RestaurantSettingsDrawer.svelte';
 	import favoriteSuggestions from '#lib/favorite-suggestions.json';
 	import otherRestaurants from '#lib/other-restaurants.json';
 	import type { PageProps } from './$types';
@@ -11,11 +17,16 @@
 	const deliveredRemindersStorageKey = 'lunch.favorite-reminders-delivered.v1';
 	const lastReminderScanStorageKey = 'lunch.favorite-reminders-last-scan.v1';
 	const restaurantCookieName = 'lunch-hidden-restaurants';
+	const restaurantOrderCookieName = 'lunch-restaurant-order';
+	const restaurantCollapsedCookieName = 'lunch-collapsed-restaurants';
 
 	let { data }: PageProps = $props();
 	let favoriteDialog = $state<HTMLDialogElement | null>(null);
 	let restaurantDialog = $state<HTMLDialogElement | null>(null);
-	let importStatusDialog = $state<HTMLDialogElement | null>(null);
+	let infoDialog = $state<HTMLDialogElement | null>(null);
+	let restaurantOrder = $state<string[]>([]);
+	// svelte-ignore state_referenced_locally
+	let collapsedRestaurantSlugs = $state<string[]>(data.collapsedSlugs ?? []);
 	let favorites = $state(['']);
 	let favoriteReminderEnabled = $state([false]);
 	let shuffledFavoriteSuggestions = $state<string[]>([]);
@@ -23,8 +34,18 @@
 	let favoritesStorageWarning = $state('');
 	let checkingFavoriteReminders = false;
 	const favoriteCount = $derived(favorites.filter((favorite) => favorite.trim()).length);
+	const orderedRestaurants = $derived(
+		[...data.restaurants].sort((left, right) => {
+			const leftIndex = restaurantOrder.indexOf(left.slug);
+			const rightIndex = restaurantOrder.indexOf(right.slug);
+			return (
+				(leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex) -
+				(rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex)
+			);
+		})
+	);
 	const visibleRestaurants = $derived(
-		data.restaurants.filter((restaurant) => !hiddenRestaurantIds.includes(restaurant.id))
+		orderedRestaurants.filter((restaurant) => !hiddenRestaurantIds.includes(restaurant.id))
 	);
 	const days = $derived.by(() => {
 		const monday = new SvelteDate(`${data.weekStart}T00:00:00Z`);
@@ -43,6 +64,8 @@
 		});
 	});
 
+	const currentYear = new Date().getFullYear();
+
 	function getCalendarWeek(date: Date): number {
 		const d = new SvelteDate(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
 
@@ -54,6 +77,12 @@
 	}
 
 	const today = new SvelteDate();
+	const todayDate = new Intl.DateTimeFormat('en-CA', {
+		timeZone: 'Europe/Berlin',
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit'
+	}).format(today);
 
 	function formatDate(date: string): string {
 		return new SvelteDate(`${date}T00:00:00`).toLocaleDateString('de-DE', {
@@ -161,12 +190,28 @@
 		persistFavoriteReminders();
 	}
 
-	function closeDrawerOnBackdrop(event: MouseEvent) {
-		if (event.target instanceof HTMLDialogElement) event.target.close();
-	}
-
 	function persistHiddenRestaurants() {
 		document.cookie = `${restaurantCookieName}=${encodeURIComponent(JSON.stringify(hiddenRestaurantIds))}; path=/; max-age=31536000; samesite=lax`;
+	}
+
+	function persistCollapsedRestaurants() {
+		document.cookie = `${restaurantCollapsedCookieName}=${encodeURIComponent(JSON.stringify(collapsedRestaurantSlugs))}; path=/; max-age=31536000; samesite=lax`;
+	}
+
+	function toggleRestaurantDetails(slug: string, open: boolean) {
+		if (open) {
+			if (collapsedRestaurantSlugs.includes(slug)) {
+				collapsedRestaurantSlugs = collapsedRestaurantSlugs.filter(
+					(collapsedSlug) => collapsedSlug !== slug
+				);
+				persistCollapsedRestaurants();
+			}
+		} else {
+			if (!collapsedRestaurantSlugs.includes(slug)) {
+				collapsedRestaurantSlugs = [...collapsedRestaurantSlugs, slug];
+				persistCollapsedRestaurants();
+			}
+		}
 	}
 
 	function toggleRestaurant(id: string, visible: boolean) {
@@ -174,6 +219,35 @@
 			? hiddenRestaurantIds.filter((hiddenId) => hiddenId !== id)
 			: [...hiddenRestaurantIds, id];
 		persistHiddenRestaurants();
+	}
+
+	function saveRestaurantOrder(order: string[]) {
+		const knownSlugs = new SvelteSet(data.restaurants.map((restaurant) => restaurant.slug));
+		restaurantOrder = [...order.filter((slug) => knownSlugs.has(slug))];
+		for (const restaurant of data.restaurants) {
+			if (!restaurantOrder.includes(restaurant.slug)) restaurantOrder.push(restaurant.slug);
+		}
+		document.cookie = `${restaurantOrderCookieName}=${encodeURIComponent(JSON.stringify(restaurantOrder))}; path=/; max-age=31536000; samesite=lax`;
+	}
+
+	function moveRestaurant(sourceSlug: string, targetSlug: string) {
+		if (sourceSlug === targetSlug) return;
+		const order = [...restaurantOrder];
+		const sourceIndex = order.indexOf(sourceSlug);
+		const targetIndex = order.indexOf(targetSlug);
+		if (sourceIndex === -1 || targetIndex === -1) return;
+		order.splice(sourceIndex, 1);
+		order.splice(sourceIndex < targetIndex ? targetIndex - 1 : targetIndex, 0, sourceSlug);
+		saveRestaurantOrder(order);
+	}
+
+	function moveRestaurantBy(slug: string, offset: number) {
+		const order = [...restaurantOrder];
+		const index = order.indexOf(slug);
+		const targetIndex = index + offset;
+		if (index === -1 || targetIndex < 0 || targetIndex >= order.length) return;
+		[order[index], order[targetIndex]] = [order[targetIndex], order[index]];
+		saveRestaurantOrder(order);
 	}
 
 	function formatDateTime(timestamp: number): string {
@@ -309,6 +383,7 @@
 	}
 
 	onMount(() => {
+		restaurantOrder = data.restaurants.map((restaurant) => restaurant.slug);
 		shuffledFavoriteSuggestions = [...favoriteSuggestions];
 		for (let index = shuffledFavoriteSuggestions.length - 1; index > 0; index--) {
 			const randomIndex = Math.floor(Math.random() * (index + 1));
@@ -335,6 +410,24 @@
 			}
 		} catch {
 			hiddenRestaurantIds = [];
+		}
+
+		try {
+			const cookie = document.cookie
+				.split('; ')
+				.find((entry) => entry.startsWith(`${restaurantCollapsedCookieName}=`));
+			if (cookie) {
+				const parsed: unknown = JSON.parse(
+					decodeURIComponent(cookie.slice(restaurantCollapsedCookieName.length + 1))
+				);
+				if (Array.isArray(parsed)) {
+					collapsedRestaurantSlugs = parsed.filter(
+						(slug): slug is string => typeof slug === 'string'
+					);
+				}
+			}
+		} catch {
+			collapsedRestaurantSlugs = [];
 		}
 
 		try {
@@ -366,346 +459,66 @@
 	});
 </script>
 
-<div class="mx-auto grid w-full max-w-screen-2xl min-w-0 gap-6">
-	<section
-		class="page-header col-span-full grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 lg:flex"
-	>
-		<h1 class="order-1 col-span-3 text-3xl sm:grow">Mittagessen Beta</h1>
-		<button
-			type="button"
-			onclick={() => favoriteDialog?.showModal()}
-			class="order-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded border px-3 py-2 lg:w-auto"
-			aria-label="Lieblingsgerichte bearbeiten"
-		>
-			<i class="fa-solid fa-heart" aria-hidden="true"></i>
-			<span class="hidden lg:inline">Lieblingsgerichte</span>
-			{#if favoriteCount > 0}<span>({favoriteCount})</span>{/if}
-		</button>
-		<button
-			type="button"
-			onclick={() => restaurantDialog?.showModal()}
-			class="order-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded border px-3 py-2 lg:w-auto"
-			aria-label="Angezeigte Restaurants konfigurieren"
-		>
-			<i class="fa-solid fa-sliders" aria-hidden="true"></i>
-			<span class="hidden lg:inline">Restaurants</span>
-			<span>({visibleRestaurants.length}/{data.restaurants.length})</span>
-		</button>
-		<button
-			type="button"
-			onclick={() => importStatusDialog?.showModal()}
-			class="order-5 inline-flex size-10 items-center justify-center rounded border p-0"
-			aria-label="Importstatus anzeigen"
-		>
-			<i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-		</button>
-		<div
-			class="order-2 col-span-3 grid grid-cols-[auto_auto] items-center gap-x-6 justify-self-center text-center lg:col-span-1 lg:justify-self-end lg:text-right"
-		>
-			<div class="text-xs">KW</div>
-			<div class="text-xs">Datum</div>
-			<div class="text-lg font-bold">{getCalendarWeek(today)}</div>
-			<div class="text-lg font-bold">
-				{today.toLocaleDateString('de-DE', {
-					day: 'numeric',
-					month: 'long'
-				})}
-			</div>
-		</div>
-	</section>
-	<div class="grid min-w-0 gap-6 px-4 pb-4">
-		<dialog
-			bind:this={favoriteDialog}
-			onclick={closeDrawerOnBackdrop}
-			aria-labelledby="favorites-title"
-			class="drawer fixed inset-y-0 left-0 m-0 h-dvh max-h-dvh w-full max-w-md border-0 p-0"
-		>
-			<div class="flex h-full flex-col border-0 sm:border-r">
-				<header class="flex items-start justify-between gap-4 border-b p-5">
-					<div>
-						<h2 id="favorites-title" class="text-2xl font-semibold">Lieblingsgerichte</h2>
-						<p class="mt-2 text-sm">Treffer werden in den aktuellen Karten markiert.</p>
-					</div>
-					<button
-						type="button"
-						onclick={() => favoriteDialog?.close()}
-						aria-label="Drawer schließen"
-						class="rounded border px-3 py-2"
-					>
-						<i class="fa-solid fa-xmark" aria-hidden="true"></i>
-					</button>
-				</header>
-				<div class="grid content-start gap-4 overflow-y-auto p-5">
-					{#each favorites as favorite, index (index)}
-						<div class="flex items-end gap-2">
-							<label class="grid grow gap-1 text-sm font-medium">
-								<span>Gericht {index + 1}</span>
-								<input
-									type="text"
-									value={favorite}
-									oninput={(event) => updateFavorite(index, event.currentTarget.value)}
-									placeholder={getFavoritePlaceholder(index)}
-									class="w-full rounded border px-2 py-3 leading-6 font-normal"
-								/>
-							</label>
-							<button
-								type="button"
-								onclick={() => toggleFavoriteReminder(index)}
-								aria-label={favoriteReminderEnabled[index]
-									? `Erinnerung für Gericht ${index + 1} deaktivieren`
-									: `Erinnerung für Gericht ${index + 1} aktivieren`}
-								aria-pressed={favoriteReminderEnabled[index]}
-								title={favoriteReminderEnabled[index]
-									? 'Erinnerung aktiv'
-									: 'Erinnerung aktivieren'}
-								disabled={!favorite.trim()}
-								class="rounded border px-3 py-3 leading-6 disabled:cursor-not-allowed disabled:opacity-50"
-							>
-								<i
-									class={favoriteReminderEnabled[index] ? 'fa-solid fa-bell' : 'fa-regular fa-bell'}
-									aria-hidden="true"
-								></i>
-							</button>
-							<button
-								type="button"
-								onclick={() => removeFavorite(index)}
-								aria-label="Gericht {index + 1} entfernen"
-								class="rounded border px-3 py-3 leading-6"
-							>
-								<i class="fa-solid fa-trash" aria-hidden="true"></i>
-							</button>
-						</div>
-					{/each}
-					<button type="button" onclick={addFavorite} class="justify-self-start rounded border p-2">
-						<i class="fa-solid fa-plus mr-2" aria-hidden="true"></i>
-						Weiteres Gericht hinzufügen
-					</button>
-					<p class="text-sm">
-						Die Favoriten werden nur in diesem Browser gespeichert. Schreibweisen mit oder ohne
-						Umlaute werden beim Abgleich vereinheitlicht. Aktivierte Erinnerungen erscheinen ab 11
-						Uhr bis 20 Uhr, wenn diese Seite geöffnet ist. Beim späteren Öffnen werden passende
-						Hinweise noch am selben Tag nachgeholt.
-					</p>
-					{#if favoritesStorageWarning}
-						<p class="text-sm" role="status">{favoritesStorageWarning}</p>
-					{/if}
-				</div>
-			</div>
-		</dialog>
-		<dialog
-			bind:this={restaurantDialog}
-			onclick={closeDrawerOnBackdrop}
-			aria-labelledby="restaurants-title"
-			class="drawer fixed inset-y-0 left-0 m-0 h-dvh max-h-dvh w-full max-w-md border-0 p-0"
-		>
-			<div class="flex h-full flex-col border-0 sm:border-r">
-				<header class="flex items-start justify-between gap-4 border-b p-5">
-					<div>
-						<h2 id="restaurants-title" class="text-2xl font-semibold">Angezeigte Restaurants</h2>
-						<p class="mt-2 text-sm">Wähle aus, welche Restaurants auf der Seite erscheinen.</p>
-					</div>
-					<button
-						type="button"
-						onclick={() => restaurantDialog?.close()}
-						aria-label="Drawer schließen"
-						class="rounded border px-3 py-2"
-					>
-						<i class="fa-solid fa-xmark" aria-hidden="true"></i>
-					</button>
-				</header>
-				<div class="grid content-start gap-3 overflow-y-auto p-5">
-					{#each data.restaurants as restaurant (restaurant.id)}
-						<label class="flex items-center gap-3">
-							<input
-								type="checkbox"
-								checked={!hiddenRestaurantIds.includes(restaurant.id)}
-								onchange={(event) => toggleRestaurant(restaurant.id, event.currentTarget.checked)}
-							/>
-							<span>{restaurant.restaurantName}</span>
-						</label>
-					{/each}
-					<p class="text-sm">
-						Deine Auswahl wird ein Jahr lang in einem Cookie dieses Browsers gespeichert.
-					</p>
-				</div>
-			</div>
-		</dialog>
-		<dialog
-			bind:this={importStatusDialog}
-			onclick={closeDrawerOnBackdrop}
-			aria-labelledby="import-status-title"
-			class="drawer fixed inset-y-0 left-0 m-0 h-dvh max-h-dvh w-full max-w-md border-0 p-0"
-		>
-			<div class="flex h-full flex-col border-0 sm:border-r">
-				<header class="flex items-start justify-between gap-4 border-b p-5">
-					<div>
-						<h2 id="import-status-title" class="text-2xl font-semibold">Importstatus</h2>
-						<p class="mt-2 text-sm">
-							Letzte erfolgreiche Importe und aktuelle Fehler je Restaurant.
-						</p>
-					</div>
-					<button
-						type="button"
-						onclick={() => importStatusDialog?.close()}
-						aria-label="Drawer schließen"
-						class="rounded border px-3 py-2"
-					>
-						<i class="fa-solid fa-xmark" aria-hidden="true"></i>
-					</button>
-				</header>
-				<div class="grid content-start gap-4 overflow-y-auto p-5">
-					{#each data.importStatuses as status (status.sourceSlug)}
-						<p class="text-sm" aria-live="polite">
-							<span class="font-medium">{status.restaurantName}:</span>
-							{#if status.lastError}
-								Aktualisierung fehlgeschlagen. Die zuletzt erfolgreich importierten Gerichte werden
-								weiterhin angezeigt; letzter erfolgreicher Import:
-								{status.lastSuccessAt ? formatDateTime(status.lastSuccessAt) : 'noch keiner'}.
-							{:else if status.lastSuccessAt}
-								{#if isStale(status.lastSuccessAt)}
-									Daten möglicherweise veraltet; letzter erfolgreicher Import:
-								{:else}
-									Zuletzt erfolgreich aktualisiert:
-								{/if}
-								{formatDateTime(status.lastSuccessAt)}.
-							{:else}
-								Import läuft oder wurde noch nicht erfolgreich abgeschlossen.
-							{/if}
-						</p>
-					{:else}
-						<p class="text-sm">Noch keine Importstatus vorhanden.</p>
-					{/each}
-				</div>
-			</div>
-		</dialog>
-		<section class="grid min-w-0 gap-4">
-			<h2 class="text-2xl">Restaurants</h2>
+<div class="mx-auto grid w-full max-w-screen-2xl min-w-0 gap-2">
+	<PageHeader
+		{favoriteCount}
+		visibleRestaurantCount={visibleRestaurants.length}
+		totalRestaurantCount={data.restaurants.length}
+		weekNumber={getCalendarWeek(today)}
+		dateLabel={today.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })}
+		onOpenFavorites={() => favoriteDialog?.showModal()}
+		onOpenRestaurants={() => restaurantDialog?.showModal()}
+		onOpenInfo={() => infoDialog?.showModal()}
+	/>
+
+	<main class="grid min-w-0 gap-4 p-2">
+		<FavoritesDrawer
+			bind:dialog={favoriteDialog}
+			{favorites}
+			{favoriteReminderEnabled}
+			{favoritesStorageWarning}
+			{getFavoritePlaceholder}
+			onUpdateFavorite={updateFavorite}
+			onToggleFavoriteReminder={toggleFavoriteReminder}
+			onRemoveFavorite={removeFavorite}
+			onAddFavorite={addFavorite}
+		/>
+		<RestaurantSettingsDrawer
+			bind:dialog={restaurantDialog}
+			{orderedRestaurants}
+			{hiddenRestaurantIds}
+			onToggleRestaurant={toggleRestaurant}
+			onMoveRestaurant={moveRestaurant}
+			onMoveRestaurantBy={moveRestaurantBy}
+		/>
+		<InfoDrawer
+			bind:dialog={infoDialog}
+			statuses={data.importStatuses}
+			{formatDateTime}
+			{isStale}
+		/>
+
+		<section class="grid min-w-0 gap-2">
+			<h2 class="px-2 text-2xl">Restaurants</h2>
 			{#if visibleRestaurants.length === 0}
 				<p>Aktuell werden keine Restaurants angezeigt.</p>
 			{:else}
 				{#each visibleRestaurants as restaurant (restaurant.id)}
-					{@const dailyMenus = restaurant.menus.filter((menu) => menu.menuType === 'daily')}
-					{@const weeklyMenus = restaurant.menus.filter((menu) => menu.menuType === 'weekly')}
-					<div class="flex min-w-0 items-start">
-						<details open class="min-w-0 grow rounded-l-xl border">
-							<summary class="cursor-pointer px-4 py-2 text-xl font-bold">
-								{restaurant.restaurantName}
-							</summary>
-							<div class="grid gap-4 p-4 pt-0">
-								{#if dailyMenus.length > 0}
-									<section class="grid gap-4">
-										<h4 class="text-lg font-semibold">Tagesgerichte</h4>
-										<div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
-											{#each days as day (day.date)}
-												<div class="flex flex-col gap-4 rounded-lg bg-gray-100/5 p-4">
-													<h5 class="font-semibold capitalize">
-														{day.name} <span class="font-normal">{day.label}</span>
-													</h5>
-													{#each dailyMenus.filter((menu) => menu.validFrom === day.date) as menu (menu.id)}
-														{#each menu.items as item (item.id)}
-															{@const title = withoutPrices(item.name)}
-															{@const category = item.category
-																? withoutPrices(item.category)
-																: null}
-															{@const description = withoutPrices(item.description)}
-															{@const matches = matchingFavorites(
-																`${item.name} ${item.category ?? ''} ${item.description}`
-															)}
-															<div>
-																{#if category}
-																	<p class="text-sm font-semibold">{category}</p>
-																{/if}
-																<div class="font-medium">{title}</div>
-																{#if matches.length > 0}
-																	<p
-																		class="inline-flex items-center gap-1 rounded text-xs text-red-500"
-																	>
-																		<i class="fa-solid fa-heart" aria-hidden="true"></i>
-																		Lieblingsgericht: {matches.join(', ')}
-																	</p>
-																{/if}
-																{#if description}<p>{description}</p>{/if}
-															</div>
-														{/each}
-													{:else}
-														<p class="text-sm text-gray-500">Kein Tagesgericht angegeben</p>
-													{/each}
-												</div>
-											{/each}
-										</div>
-									</section>
-								{/if}
-
-								{#each weeklyMenus as menu (menu.id)}
-									<section class="grid gap-4">
-										<div class="flex flex-wrap items-baseline justify-between gap-2">
-											<h4 class="text-lg font-semibold">Wochenangebote</h4>
-											<p class="inline-flex items-center gap-1 self-start text-xs">
-												{formatDate(menu.validFrom)} – {formatDate(menu.validUntil)}
-											</p>
-										</div>
-										<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-											{#each menu.items as item (item.id)}
-												{@const title = withoutPrices(
-													item.code ? `${item.code} – ${item.name}` : item.name
-												)}
-												{@const category = item.category ? withoutPrices(item.category) : null}
-												{@const description = withoutPrices(item.description)}
-												{@const matches = matchingFavorites(
-													`${item.name} ${item.category ?? ''} ${item.description}`
-												)}
-												<div class="flex flex-col gap-1">
-													{#if category}
-														<p class="text-sm font-semibold">{category}</p>
-													{/if}
-													<h5 class="font-semibold">{title}</h5>
-													{#if matches.length > 0}
-														<p class="text-xs text-red-500">
-															<i class="fa-solid fa-heart" aria-hidden="true"></i>
-															Lieblingsgericht: {matches.join(', ')}
-														</p>
-													{/if}
-													{#if description}<p>{description}</p>{/if}
-												</div>
-											{/each}
-										</div>
-									</section>
-								{/each}
-							</div>
-						</details>
-						<a
-							href={restaurant.restaurantUrl}
-							target="_blank"
-							rel="external noreferrer"
-							aria-label="Restaurantseite von {restaurant.restaurantName} öffnen"
-							title="Restaurantseite von {restaurant.restaurantName} öffnen"
-							class="flex h-full shrink-0 items-center rounded-r-xl border px-2 py-2"
-						>
-							<i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i>
-						</a>
-					</div>
+					<RestaurantCard
+						{restaurant}
+						{days}
+						{todayDate}
+						{formatDate}
+						{withoutPrices}
+						{matchingFavorites}
+						isOpen={!collapsedRestaurantSlugs.includes(restaurant.slug)}
+						onToggle={toggleRestaurantDetails}
+					/>
 				{/each}
 			{/if}
 		</section>
-		{#if otherRestaurants.length > 0}
-			<section class="grid gap-4" aria-labelledby="other-restaurants-title">
-				<h2 id="other-restaurants-title" class="text-2xl">Weitere Restaurants</h2>
-				<div
-					class="grid grid-cols-2 gap-0 overflow-hidden rounded-xl border sm:grid-cols-3 lg:grid-cols-4"
-				>
-					{#each otherRestaurants as restaurant, index (index)}
-						<a
-							href={restaurant.url}
-							target="_blank"
-							rel="external noreferrer"
-							class="border-r border-b p-4"
-						>
-							<span>{restaurant.name}</span>
-							<i class="fa-solid fa-up-right-from-square ml-2 text-sm" aria-hidden="true"></i>
-						</a>
-					{/each}
-				</div>
-			</section>
-		{/if}
-	</div>
+
+		<OtherRestaurants restaurants={otherRestaurants} />
+	</main>
+	<footer class="mx-auto p-4 text-xs">© {currentYear} henahax.net</footer>
 </div>
