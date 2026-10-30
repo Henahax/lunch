@@ -37,9 +37,4 @@ Eine Seite für die aktuellen Mittagsgerichte teilnehmender Restaurants.
 - [ ] Optional Web Push ergänzen, damit Erinnerungen auch bei geschlossener Lunch-Seite zugestellt werden.
 - [ ] Optional Favoriten zwischen Geräten synchronisieren, falls dafür später Bedarf besteht.
 - [ ] Weiteres Restaurant: Zeller (Endgegner)
-- [ ] Header-Typografie finalisieren
-- [ ] Footer
-- [ ] Open-Source-Veröffentlichung vorbereiten
-- [ ] Responsive Layout und Media Queries überarbeiten
-- [ ] UI-Redesign
 - [ ] Khanitta import fehlgeschlagen prüfen
