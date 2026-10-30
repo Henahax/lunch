@@ -12,7 +12,7 @@
 	<section class="grid gap-2" aria-labelledby="other-restaurants-title">
 		<h2 id="other-restaurants-title" class="px-2 text-2xl">Weitere Restaurants</h2>
 		<nav
-			class="other-restaurants-grid grid grid-cols-2 gap-0 overflow-hidden rounded-xl border sm:grid-cols-4 lg:grid-cols-5"
+			class="other-restaurants-grid grid grid-cols-2 gap-0 overflow-hidden rounded border sm:grid-cols-4 lg:grid-cols-5"
 		>
 			{#each restaurants as restaurant (restaurant.url)}
 				<a
