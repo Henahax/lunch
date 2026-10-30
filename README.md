@@ -38,3 +38,4 @@ Eine Seite für die aktuellen Mittagsgerichte teilnehmender Restaurants.
 - [ ] Optional Favoriten zwischen Geräten synchronisieren, falls dafür später Bedarf besteht.
 - [ ] Weiteres Restaurant: Zeller (Endgegner)
 - [ ] Khanitta import fehlgeschlagen prüfen
+- [ ] Fade out Restaurant Link beim zuklappen
