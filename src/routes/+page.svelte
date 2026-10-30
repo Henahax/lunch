@@ -520,5 +520,16 @@
 
 		<OtherRestaurants restaurants={otherRestaurants} />
 	</main>
-	<footer class="mx-auto p-4 text-xs">© {currentYear} henahax.net</footer>
+	<footer class="flex p-4 text-xs">
+		<span class="grow text-center">© {currentYear} henahax.net</span>
+		<a
+			class="flex items-center gap-1"
+			href="https://github.com/Henahax/lunch"
+			target="_blank"
+			rel="noopener noreferrer"
+		>
+			<i class="fa-brands fa-github"></i>
+			<span>Source</span>
+		</a>
+	</footer>
 </div>

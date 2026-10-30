@@ -349,8 +349,12 @@ dialog.drawer[open]::backdrop {
 	}
 }
 
-footer {
+footer > span {
 	color: var(--color-text-muted);
+}
+
+footer a:hover {
+	color: var(--color-accent);
 }
 
 button,
