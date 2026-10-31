@@ -33,9 +33,7 @@ Eine Seite für die aktuellen Mittagsgerichte teilnehmender Restaurants.
 
 ## Offene Punkte
 
-- [ ] Den PDF-Import für Zum Riederstein bei Gelegenheit weiter verbessern; aktuell werden noch nicht alle Gerichte zuverlässig erkannt.
 - [ ] Optional Web Push ergänzen, damit Erinnerungen auch bei geschlossener Lunch-Seite zugestellt werden.
 - [ ] Optional Favoriten zwischen Geräten synchronisieren, falls dafür später Bedarf besteht.
 - [ ] Weiteres Restaurant: Zeller (Endgegner)
-- [ ] Khanitta import fehlgeschlagen prüfen
 - [ ] Fade out Restaurant Link beim zuklappen
