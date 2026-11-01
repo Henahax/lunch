@@ -33,7 +33,10 @@ export function storeRestaurantMenus(
 	return db.transaction((tx) => {
 		tx.insert(restaurants)
 			.values({ ...restaurant, sourceUrl: restaurantUrl })
-			.onConflictDoNothing({ target: restaurants.slug })
+			.onConflictDoUpdate({
+				target: restaurants.slug,
+				set: { name: restaurant.name, sourceUrl: restaurantUrl }
+			})
 			.run();
 
 		const savedRestaurant = tx
