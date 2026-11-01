@@ -499,7 +499,7 @@
 		/>
 
 		<section class="grid min-w-0 gap-2">
-			<h2 class="px-2 text-2xl">Restaurants</h2>
+			<h2 class="px-1 text-xl">Restaurants</h2>
 			{#if visibleRestaurants.length === 0}
 				<p>Aktuell werden keine Restaurants angezeigt.</p>
 			{:else}
