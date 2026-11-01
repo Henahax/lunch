@@ -18,12 +18,16 @@ import {
 } from './sources';
 
 const timeZone = 'Europe/Berlin';
-const runHour = 8;
+const importSchedule = [
+	// Wochentage verwenden die JavaScript-Zählung: 0 = Sonntag, 1 = Montag, ..., 6 = Samstag.
+	{ weekdays: [0, 1, 2, 3, 4, 5, 6], hour: 8, minute: 0 },
+	{ weekdays: [1], hour: 11, minute: 0 }
+];
 let started = false;
 let running = false;
 
 function berlinDate(date: Date): string {
-	const parts = new Intl.DateTimeFormat('en-CA', {
+	const parts = new Intl.DateTimeFormat('de-DE', {
 		timeZone,
 		year: 'numeric',
 		month: '2-digit',
@@ -33,11 +37,11 @@ function berlinDate(date: Date): string {
 	return `${values.year}-${values.month}-${values.day}`;
 }
 
-function berlinDateTime(date: string, hour: number): Date {
+function berlinDateTime(date: string, hour: number, minute: number): Date {
 	const [year, month, day] = date.split('-').map(Number);
-	const localAsUtc = Date.UTC(year, month - 1, day, hour);
+	const localAsUtc = Date.UTC(year, month - 1, day, hour, minute);
 	let timestamp = localAsUtc;
-	const formatter = new Intl.DateTimeFormat('en-CA', {
+	const formatter = new Intl.DateTimeFormat('de-DE', {
 		timeZone,
 		year: 'numeric',
 		month: '2-digit',
@@ -67,14 +71,25 @@ function berlinDateTime(date: string, hour: number): Date {
 }
 
 function millisecondsUntilNextRun(now = new Date()): number {
-	let nextDate = berlinDate(now);
-	let nextRun = berlinDateTime(nextDate, runHour);
-	if (nextRun.getTime() <= now.getTime()) {
-		const nextDay = new Date(`${nextDate}T00:00:00Z`);
-		nextDay.setUTCDate(nextDay.getUTCDate() + 1);
-		nextDate = nextDay.toISOString().slice(0, 10);
-		nextRun = berlinDateTime(nextDate, runHour);
+	const today = new Date(`${berlinDate(now)}T00:00:00Z`);
+	let nextRun: Date | undefined;
+
+	for (let dayOffset = 0; dayOffset <= 7; dayOffset += 1) {
+		const date = new Date(today);
+		date.setUTCDate(date.getUTCDate() + dayOffset);
+		const weekday = date.getUTCDay();
+		const dateString = date.toISOString().slice(0, 10);
+
+		for (const schedule of importSchedule) {
+			if (!schedule.weekdays.includes(weekday)) continue;
+
+			const candidate = berlinDateTime(dateString, schedule.hour, schedule.minute);
+			if (candidate.getTime() <= now.getTime()) continue;
+			if (!nextRun || candidate.getTime() < nextRun.getTime()) nextRun = candidate;
+		}
 	}
+
+	if (!nextRun) throw new Error('No upcoming menu import is configured.');
 	return nextRun.getTime() - now.getTime();
 }
 
@@ -129,7 +144,9 @@ function scheduleNextRun() {
 export function startImportScheduler() {
 	if (started) return;
 	started = true;
-	console.info('Starting menu imports on startup and daily at 08:00 Europe/Berlin.');
+	console.info(
+		'Starting menu imports on startup and according to the configured Europe/Berlin schedule.'
+	);
 	void runImports();
 	scheduleNextRun();
 }
