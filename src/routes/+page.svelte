@@ -459,7 +459,7 @@
 	});
 </script>
 
-<div class="mx-auto grid w-full max-w-screen-2xl min-w-0 gap-2">
+<div class="mx-auto flex min-h-dvh w-full max-w-screen-2xl min-w-0 flex-col gap-2">
 	<PageHeader
 		{favoriteCount}
 		visibleRestaurantCount={visibleRestaurants.length}
@@ -471,7 +471,7 @@
 		onOpenInfo={() => infoDialog?.showModal()}
 	/>
 
-	<main class="grid min-w-0 gap-4 p-2">
+	<main class="flex min-w-0 flex-1 flex-col gap-4 p-2">
 		<FavoritesDrawer
 			bind:dialog={favoriteDialog}
 			{favorites}
@@ -498,8 +498,8 @@
 			{isStale}
 		/>
 
-		<section class="grid min-w-0 gap-2">
-			<h2 class="px-1 text-xl">Restaurants</h2>
+		<section class="grid min-w-0 grow content-start gap-2">
+			<h2 class="px-2 text-2xl">Restaurants</h2>
 			{#if visibleRestaurants.length === 0}
 				<p>Aktuell werden keine Restaurants angezeigt.</p>
 			{:else}
