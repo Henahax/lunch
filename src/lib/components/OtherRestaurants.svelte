@@ -12,14 +12,14 @@
 	<section class="grid gap-2" aria-labelledby="other-restaurants-title">
 		<h2 id="other-restaurants-title" class="px-1 text-xl">Weitere Restaurants</h2>
 		<nav
-			class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,12rem),1fr))] gap-2 overflow-hidden rounded"
+			class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,11rem),1fr))] gap-1 overflow-hidden rounded"
 		>
 			{#each restaurants as restaurant (restaurant.url)}
 				<a
 					href={restaurant.url}
 					target="_blank"
 					rel="external noreferrer"
-					class="ui-button grid grid-cols-[1fr_auto] items-center justify-center gap-x-2 rounded border px-2 py-1"
+					class="ui-button grid grid-cols-[1fr_auto] items-center justify-center gap-x-2 rounded-lg border px-2 py-1"
 				>
 					<span class="self-end text-sm">{restaurant.name}</span>
 					<i class="fa-solid fa-up-right-from-square row-span-2 text-sm"></i>
