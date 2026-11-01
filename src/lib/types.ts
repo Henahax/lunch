@@ -41,5 +41,6 @@ export type RestaurantDay = {
 
 export type OtherRestaurant = {
 	name: string;
+	description: string;
 	url: string;
 };

@@ -58,8 +58,7 @@ body {
 	color: var(--color-text);
 }
 
-.ui-button,
-.other-restaurants-link {
+.ui-button {
 	border-color: var(--color-border);
 	background-color: var(--color-surface);
 	color: var(--color-text);
@@ -71,8 +70,7 @@ body {
 		color 150ms ease;
 }
 
-.ui-button:hover,
-.other-restaurants-link:hover {
+.ui-button:hover {
 	border-color: var(--color-primary-light);
 	background-color: color-mix(in srgb, var(--color-surface-muted) 80%, white);
 	color: #ffffff;
@@ -156,6 +154,16 @@ details.restaurant-card[open] > .restaurant-card__summary::before {
 
 .restaurant-card__external-link {
 	border-color: var(--color-border);
+	opacity: 0;
+	visibility: hidden;
+	transition:
+		opacity 200ms ease,
+		visibility 200ms allow-discrete;
+}
+
+details.restaurant-card[open] > .restaurant-card__external-link {
+	opacity: 1;
+	visibility: visible;
 }
 
 .restaurant-card__external-link:hover {
@@ -240,8 +248,7 @@ details.restaurant-card[open] > .restaurant-card__summary::before {
 	color: var(--color-favorite);
 }
 
-.restaurant-sort-row,
-.other-restaurants-grid {
+.restaurant-sort-row {
 	border-color: var(--color-border);
 	background-color: var(--color-surface-muted);
 }
@@ -342,8 +349,7 @@ dialog.drawer[open]::backdrop {
 	.restaurant-card__summary,
 	.menu-card,
 	.menu-item--favorite,
-	.ui-button,
-	.other-restaurants-link {
+	.ui-button {
 		transition: none !important;
 		transform: none !important;
 	}

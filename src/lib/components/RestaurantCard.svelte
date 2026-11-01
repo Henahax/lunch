@@ -29,7 +29,7 @@
 <details
 	open={isOpen}
 	ontoggle={(event) => onToggle?.(restaurant.slug, event.currentTarget.open)}
-	class="restaurant-card relative min-w-0 rounded border"
+	class="restaurant-card relative min-w-0 rounded-lg border"
 >
 	<summary
 		class="restaurant-card__summary flex cursor-pointer items-center gap-1 px-2 py-1 pr-12 text-xl font-bold"

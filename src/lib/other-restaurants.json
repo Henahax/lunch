@@ -1,22 +1,52 @@
 [
 	{
 		"name": "Tikka N Talk",
+		"description": "Indisch",
 		"url": "https://www.tikka-n-talk.de/#comp-mhgc9ni0"
 	},
 	{
 		"name": "pureburrito",
+		"description": "Tex-Mex",
 		"url": "https://www.pureburrito.com/pureburrito/essen.html"
 	},
 	{
+		"name": "Imbiss Kantine",
+		"description": "Pasta, Kartoffelgerichte",
+		"url": "https://maps.app.goo.gl/y2cNLtFge7sQZ3Qz7"
+	},
+	{
+		"name": "forno veloce",
+		"description": "Italienisch, Pinsa",
+		"url": "https://www.werksviertel-mitte.de/gastronomie/forno-veloce/"
+	},
+	{
 		"name": "Aloha Poke",
+		"description": "Hawaiianisch",
 		"url": "https://www.aloha-poke.com/#comp-lhuif46r1"
 	},
 	{
 		"name": "Asia Street",
+		"description": "Asiatisch",
 		"url": "https://asiastreet.de/"
 	},
 	{
 		"name": "Sucukeria",
+		"description": "Kebap",
 		"url": "https://sucukeria.de/"
+	},
+	{
+		"name": "Bratort",
+		"description": "Fast-Food",
+		"url": "https://maps.app.goo.gl/A1yuPW3Mzgmatjrw8"
+	},
+	{
+		"name": "Herzi’s Schlemmerbus",
+		"description": "Fast-Food",
+		"url": "https://www.herzis-schlemmerbus.de/speisekarte.html"
+	},
+	{
+		"name": "we love pelmeni",
+		"description": "Osteuropäisch",
+		"url": "https://www.welovepelmeni-muenchen.de/speisekarte"
 	}
 ]
