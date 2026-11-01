@@ -25,7 +25,7 @@
 </script>
 
 <header
-	class="page-header col-span-full grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 p-2 lg:flex"
+	class="page-header col-span-full grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 p-2 lg:flex lg:gap-2"
 >
 	<h1 class="order-1 col-span-2 min-w-0 px-2 text-left text-2xl font-bold sm:text-3xl lg:grow">
 		<a
