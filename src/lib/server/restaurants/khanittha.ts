@@ -7,6 +7,7 @@ const restaurant = {
 	slug: 'khanittha',
 	name: 'Khanittha'
 };
+const maxRetryDelayMs = 5 * 60 * 1000;
 
 export type ImportedWeeklyMenu = {
 	validFrom: string;
@@ -63,6 +64,31 @@ function parseValidityPeriod(title: string, now: Date): { validFrom: string; val
 	);
 }
 
+function retryDelay(response: Response): number | null {
+	const retryAfter = response.headers.get('retry-after');
+	if (!retryAfter) return null;
+
+	const seconds = Number(retryAfter);
+	const delay = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(retryAfter) - Date.now();
+	return Number.isFinite(delay) && delay >= 0 && delay <= maxRetryDelayMs ? delay : null;
+}
+
+async function fetchMenuPage(): Promise<Response> {
+	const request = () =>
+		fetch(sourceUrl, {
+			headers: { 'user-agent': 'LunchMenuBot/1.0 (weekly public menu import)' },
+			signal: AbortSignal.timeout(15_000)
+		});
+
+	const response = await request();
+	if (response.status !== 429) return response;
+
+	const delay = retryDelay(response);
+	if (delay === null) return response;
+	await new Promise((resolve) => setTimeout(resolve, delay));
+	return request();
+}
+
 export function parseKhanitthaMenu(html: string, now = new Date()): ImportedWeeklyMenu {
 	const $ = load(html);
 	const title = $('h1, h2, h3, h4')
@@ -111,10 +137,7 @@ export function parseKhanitthaMenu(html: string, now = new Date()): ImportedWeek
 }
 
 export async function importKhanitthaMenu(now = new Date()) {
-	const response = await fetch(sourceUrl, {
-		headers: { 'user-agent': 'LunchMenuBot/1.0 (weekly public menu import)' },
-		signal: AbortSignal.timeout(15_000)
-	});
+	const response = await fetchMenuPage();
 	if (!response.ok) throw new Error(`Restaurantseite antwortete mit HTTP ${response.status}.`);
 
 	const menu = parseKhanitthaMenu(await response.text(), now);
