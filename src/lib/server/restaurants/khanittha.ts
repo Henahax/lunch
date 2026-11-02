@@ -8,6 +8,7 @@ const restaurant = {
 	name: 'Khanittha'
 };
 const maxRetryDelayMs = 5 * 60 * 1000;
+const fallbackRetryDelayMs = 60 * 1000;
 
 export type ImportedWeeklyMenu = {
 	validFrom: string;
@@ -66,7 +67,7 @@ function parseValidityPeriod(title: string, now: Date): { validFrom: string; val
 
 function retryDelay(response: Response): number | null {
 	const retryAfter = response.headers.get('retry-after');
-	if (!retryAfter) return null;
+	if (!retryAfter) return fallbackRetryDelayMs;
 
 	const seconds = Number(retryAfter);
 	const delay = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(retryAfter) - Date.now();
@@ -85,6 +86,7 @@ async function fetchMenuPage(): Promise<Response> {
 
 	const delay = retryDelay(response);
 	if (delay === null) return response;
+	console.warn(`Khanittha returned HTTP 429; retrying in ${Math.ceil(delay / 1000)} seconds.`);
 	await new Promise((resolve) => setTimeout(resolve, delay));
 	return request();
 }
