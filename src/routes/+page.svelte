@@ -44,8 +44,26 @@
 			);
 		})
 	);
-	const visibleRestaurants = $derived(
+	const selectedRestaurants = $derived(
 		orderedRestaurants.filter((restaurant) => !hiddenRestaurantIds.includes(restaurant.id))
+	);
+	const visibleRestaurants = $derived(
+		selectedRestaurants.filter((restaurant) => restaurant.menus.length > 0)
+	);
+	const unavailableRestaurants = $derived(
+		selectedRestaurants
+			.filter((restaurant) => restaurant.menus.length === 0)
+			.map((restaurant) => ({
+				name: restaurant.restaurantName,
+				importFailed: data.importStatuses.find((status) => status.sourceSlug === restaurant.slug)
+					?.lastError
+			}))
+	);
+	const failedMenuRestaurants = $derived(
+		unavailableRestaurants.filter((restaurant) => restaurant.importFailed).map(({ name }) => name)
+	);
+	const pendingMenuRestaurants = $derived(
+		unavailableRestaurants.filter((restaurant) => !restaurant.importFailed).map(({ name }) => name)
 	);
 	const days = $derived.by(() => {
 		const monday = new SvelteDate(`${data.weekStart}T00:00:00Z`);
@@ -462,7 +480,7 @@
 <div class="mx-auto flex min-h-dvh w-full max-w-screen-2xl min-w-0 flex-col gap-2">
 	<PageHeader
 		{favoriteCount}
-		visibleRestaurantCount={visibleRestaurants.length}
+		visibleRestaurantCount={selectedRestaurants.length}
 		totalRestaurantCount={data.restaurants.length}
 		weekNumber={getCalendarWeek(today)}
 		dateLabel={today.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })}
@@ -494,14 +512,17 @@
 		<InfoDrawer
 			bind:dialog={infoDialog}
 			statuses={data.importStatuses}
+			currentMenuSlugs={data.currentMenuSlugs}
 			{formatDateTime}
 			{isStale}
 		/>
 
 		<section class="grid min-w-0 grow content-start gap-2">
 			<h2 class="px-2 text-2xl">Restaurants</h2>
-			{#if visibleRestaurants.length === 0}
+			{#if selectedRestaurants.length === 0}
 				<p>Aktuell werden keine Restaurants angezeigt.</p>
+			{:else if visibleRestaurants.length === 0}
+				<p>Für die ausgewählten Restaurants liegen derzeit keine Menüs vor.</p>
 			{:else}
 				{#each visibleRestaurants as restaurant (restaurant.id)}
 					<RestaurantCard
@@ -515,6 +536,16 @@
 						onToggle={toggleRestaurantDetails}
 					/>
 				{/each}
+			{/if}
+			{#if failedMenuRestaurants.length > 0}
+				<p class="px-2 text-sm text-gray-500" aria-live="polite">
+					Der Import für {failedMenuRestaurants.join(', ')} ist fehlgeschlagen; aktuelle Menüdaten fehlen.
+				</p>
+			{/if}
+			{#if pendingMenuRestaurants.length > 0}
+				<p class="px-2 text-sm text-gray-500" aria-live="polite">
+					Das aktuelle Menü von {pendingMenuRestaurants.join(', ')} liegt noch nicht vor.
+				</p>
 			{/if}
 		</section>
 

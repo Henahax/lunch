@@ -3,7 +3,6 @@ import type { AnyNode } from 'domhandler';
 import { storeRestaurantMenus, type ImportedMenuItem, type ImportedMenuPlan } from './store-menu';
 
 const sourceUrl = 'https://vinzenzmurr.de/wochenkarte/';
-const restaurantUrl = 'https://vinzenzmurr.de/';
 const restaurant = { slug: 'vinzenzmurr', name: 'Vinzenzmurr' };
 
 const weekdays = [
@@ -38,9 +37,9 @@ function parseDateRange(title: string, now: Date): { validFrom: string; validUnt
 	const currentYear = now.getUTCFullYear();
 	const endYear = Number(
 		endYearText ??
-			(startYearText
-				? Number(startYearText) + (Number(fromMonth) > Number(untilMonth) ? 1 : 0)
-				: currentYear)
+		(startYearText
+			? Number(startYearText) + (Number(fromMonth) > Number(untilMonth) ? 1 : 0)
+			: currentYear)
 	);
 	const startYear = Number(
 		startYearText ?? (Number(fromMonth) > Number(untilMonth) ? endYear - 1 : endYear)
@@ -249,5 +248,5 @@ export async function importVinzenzmurrMenu(now = new Date()) {
 	});
 	if (!response.ok) throw new Error(`Vinzenzmurr-Seite antwortete mit HTTP ${response.status}.`);
 	const plans = parseVinzenzmurrMenu(await response.text(), now);
-	return storeRestaurantMenus(restaurant, sourceUrl, plans, now.getTime(), restaurantUrl);
+	return storeRestaurantMenus(restaurant, sourceUrl, plans, now.getTime());
 }
