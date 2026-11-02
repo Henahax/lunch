@@ -3,7 +3,6 @@ import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { storeRestaurantMenus, type ImportedMenuItem } from './store-menu';
 
 const websiteUrl = 'https://www.bindaas.de/de/werksviertel';
-const restaurantUrl = 'https://www.bindaas.de/de/werksviertel';
 const restaurant = { slug: 'bindaas', name: 'Bindaas' };
 const maxPdfSize = 20_000_000;
 
@@ -15,11 +14,13 @@ type PdfTextItem = {
 };
 
 function cleanText(value: string): string {
-	return value
-		// eslint-disable-next-line no-control-regex
-		.replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ')
-		.replace(/\s+/g, ' ')
-		.trim();
+	return (
+		value
+			// eslint-disable-next-line no-control-regex
+			.replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ')
+			.replace(/\s+/g, ' ')
+			.trim()
+	);
 }
 
 function normalize(value: string): string {
@@ -247,6 +248,6 @@ export async function importBindaasMenu(now = new Date()) {
 		pdfUrl,
 		[{ menuType: 'weekly', ...currentWeek(now), items }],
 		now.getTime(),
-		restaurantUrl
+		websiteUrl
 	);
 }

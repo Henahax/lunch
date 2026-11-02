@@ -29,3 +29,11 @@ export const bindaasSource: ImportSource = {
 	name: 'Bindaas',
 	url: 'https://www.bindaas.de/de/werksviertel'
 };
+
+export const restaurantCatalog = [
+	khanitthaSource,
+	noonSource,
+	riedersteinSource,
+	vinzenzmurrSource,
+	bindaasSource
+];

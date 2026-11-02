@@ -4,11 +4,18 @@
 	interface Props {
 		dialog?: HTMLDialogElement | null;
 		statuses: RestaurantImportStatus[];
+		currentMenuSlugs: string[];
 		formatDateTime: (timestamp: number) => string;
 		isStale: (timestamp: number) => boolean;
 	}
 
-	let { dialog = $bindable(null), statuses, formatDateTime, isStale }: Props = $props();
+	let {
+		dialog = $bindable(null),
+		statuses,
+		currentMenuSlugs,
+		formatDateTime,
+		isStale
+	}: Props = $props();
 
 	function closeOnBackdrop(event: MouseEvent) {
 		if (event.target === event.currentTarget) dialog?.close();
@@ -62,8 +69,13 @@
 					<p class="text-xs" aria-live="polite">
 						<span class="font-medium">{status.restaurantName}:</span>
 						{#if status.lastError}
-							Aktualisierung fehlgeschlagen. Die zuletzt erfolgreich importierten Gerichte werden
-							weiterhin angezeigt; letzter erfolgreicher Import:
+							Aktualisierung fehlgeschlagen.
+							{#if currentMenuSlugs.includes(status.sourceSlug)}
+								Die aktuelle Karte bleibt aus dem letzten erfolgreichen Import sichtbar.
+							{:else}
+								Das aktuelle Menü liegt noch nicht vor.
+							{/if}
+							Letzter erfolgreicher Import:
 							{status.lastSuccessAt ? formatDateTime(status.lastSuccessAt) : 'noch keiner'}.
 						{:else if status.lastSuccessAt}
 							{#if isStale(status.lastSuccessAt)}

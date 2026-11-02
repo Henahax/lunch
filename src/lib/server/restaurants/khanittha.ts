@@ -77,7 +77,17 @@ function retryDelay(response: Response): number | null {
 async function fetchMenuPage(): Promise<Response> {
 	const request = () =>
 		fetch(sourceUrl, {
-			headers: { 'user-agent': 'LunchMenuBot/1.0 (weekly public menu import)' },
+			headers: {
+				'user-agent': 'LunchMenuBot/1.0 (weekly public menu import)',
+				accept:
+					'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+				'accept-language': 'de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7',
+				'upgrade-insecure-requests': '1',
+				'sec-fetch-dest': 'document',
+				'sec-fetch-mode': 'navigate',
+				'sec-fetch-site': 'none',
+				'sec-fetch-user': '?1'
+			},
 			signal: AbortSignal.timeout(15_000)
 		});
 

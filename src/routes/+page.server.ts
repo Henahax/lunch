@@ -2,6 +2,7 @@ import { and, asc, eq, gte, lte } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 import { db } from '../lib/server/db';
 import { menuItems, menus, restaurants, sourceImportStatus } from '../lib/server/db/schema';
+import { restaurantCatalog } from '../lib/server/restaurants/sources';
 
 // Set the restaurant display order here using their slugs. Unlisted restaurants follow alphabetically.
 const restaurantOrderCookieName = 'lunch-restaurant-order';
@@ -85,19 +86,22 @@ export const load: PageServerLoad = async ({ cookies }) => {
 			}[];
 		}
 	>();
+	const configuredRestaurantSlugs = new Set(restaurantCatalog.map(({ slug }) => slug));
+	const restaurantRows = await db.select().from(restaurants);
+	for (const restaurant of restaurantRows) {
+		if (!configuredRestaurantSlugs.has(restaurant.slug)) continue;
+		groupedRestaurants.set(restaurant.id, {
+			id: restaurant.id,
+			slug: restaurant.slug,
+			restaurantName: restaurant.name,
+			restaurantUrl: restaurant.sourceUrl,
+			menus: []
+		});
+	}
 
 	for (const row of rows) {
-		let restaurant = groupedRestaurants.get(row.restaurantId);
-		if (!restaurant) {
-			restaurant = {
-				id: row.restaurantId,
-				slug: row.restaurantSlug,
-				restaurantName: row.restaurantName,
-				restaurantUrl: row.restaurantUrl,
-				menus: []
-			};
-			groupedRestaurants.set(row.restaurantId, restaurant);
-		}
+		const restaurant = groupedRestaurants.get(row.restaurantId);
+		if (!restaurant) continue;
 
 		let menu = restaurant.menus.find((candidate) => candidate.id === row.menuId);
 		if (!menu) {
@@ -164,6 +168,9 @@ export const load: PageServerLoad = async ({ cookies }) => {
 
 	return {
 		weekStart: monday,
+		currentMenuSlugs: defaultRestaurants
+			.filter((restaurant) => restaurant.menus.length > 0)
+			.map((restaurant) => restaurant.slug),
 		restaurants: defaultRestaurants.sort(
 			(left, right) => orderIndex.get(left.slug)! - orderIndex.get(right.slug)!
 		),
