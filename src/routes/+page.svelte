@@ -33,6 +33,7 @@
 	let hiddenRestaurantIds = $state<string[]>([]);
 	let favoritesStorageWarning = $state('');
 	let checkingFavoriteReminders = false;
+	let refreshPromise: Promise<void> | null = null;
 	const favoriteCount = $derived(favorites.filter((favorite) => favorite.trim()).length);
 	const orderedRestaurants = $derived(
 		[...data.restaurants].sort((left, right) => {
@@ -278,6 +279,12 @@
 		});
 	}
 
+	function refreshPageData(): Promise<void> {
+		if (refreshPromise) return refreshPromise;
+		refreshPromise = invalidateAll().finally(() => (refreshPromise = null));
+		return refreshPromise;
+	}
+
 	function withoutPrices(value: string): string {
 		return value
 			.replace(/(?:\s*\.\s*){4,}.*$/u, '')
@@ -329,7 +336,7 @@
 
 		checkingFavoriteReminders = true;
 		try {
-			await invalidateAll();
+			await refreshPageData();
 			const refreshedParts = berlinDateParts();
 			if (
 				`${refreshedParts.year}-${refreshedParts.month}-${refreshedParts.day}` !== todayKey ||
@@ -466,12 +473,22 @@
 			favoritesStorageWarning = 'Favoriten konnten aus diesem Browser nicht geladen werden.';
 		}
 
+		const refreshWhenOnline = () => {
+			if (!navigator.onLine) return;
+			void refreshPageData().catch((error) => {
+				console.warn('Aktuelle Menüdaten konnten nicht nachgeladen werden:', error);
+			});
+		};
+		if ('serviceWorker' in navigator && navigator.serviceWorker.controller) refreshWhenOnline();
+		window.addEventListener('online', refreshWhenOnline);
+
 		const check = () => void checkFavoriteReminders();
 		const interval = window.setInterval(check, 30_000);
 		document.addEventListener('visibilitychange', check);
 		check();
 		return () => {
 			window.clearInterval(interval);
+			window.removeEventListener('online', refreshWhenOnline);
 			document.removeEventListener('visibilitychange', check);
 		};
 	});
