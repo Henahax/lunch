@@ -540,7 +540,7 @@
 		onOpenInfo={() => infoDialog?.showModal()}
 	/>
 
-	<main class="flex min-w-0 flex-1 flex-col gap-4 p-2">
+	<main class="flex min-w-0 flex-1 flex-col gap-2 p-2">
 		<FavoritesDrawer
 			bind:dialog={favoriteDialog}
 			{favorites}
@@ -568,12 +568,12 @@
 			{isStale}
 		/>
 
-		<section class="grid min-w-0 grow content-start gap-2">
-			<h2 class="px-2 text-2xl">Restaurants</h2>
+		<section class="grid min-w-0 grow content-start gap-1.5">
+			<h2 class="px-2 text-2xl">Imbisse & Restaurants</h2>
 			{#if selectedRestaurants.length === 0}
-				<p>Aktuell werden keine Restaurants angezeigt.</p>
+				<p>Aktuell werden keine Imbisse & Restaurants angezeigt.</p>
 			{:else if visibleRestaurants.length === 0}
-				<p>Für die ausgewählten Restaurants liegen derzeit keine Menüs vor.</p>
+				<p>Für die ausgewählten Imbisse & Restaurants liegen derzeit keine Menüs vor.</p>
 			{:else}
 				{#each visibleRestaurants as restaurant (restaurant.id)}
 					<RestaurantCard

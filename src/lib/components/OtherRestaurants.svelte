@@ -25,14 +25,14 @@
 			onclick={() => (userInitiatedToggle = true)}
 			class="restaurant-card__summary flex cursor-pointer items-center gap-1 px-2 py-1 text-xl font-bold"
 		>
-			<h2 id="other-restaurants-title" class="inline">Weitere Restaurants</h2>
+			<h3 class="inline">Weitere Imbisse & Restaurants</h3>
 		</summary>
-		<div class="restaurant-card__content grid gap-2 p-2 pt-0">
+		<div class="restaurant-card__content grid gap-1.5 p-2 pt-0">
 			<nav
 				aria-labelledby="other-restaurants-title"
-				class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,11rem),1fr))] gap-1 overflow-hidden rounded"
+				class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-1 overflow-hidden rounded"
 			>
-				{#each restaurants as restaurant (restaurant.url)}
+				{#each restaurants.toSorted( (a, b) => a.name.localeCompare(b.name) ) as restaurant (restaurant.url)}
 					<a
 						href={restaurant.url}
 						target="_blank"
@@ -40,7 +40,7 @@
 						class="ui-button grid grid-cols-[1fr_auto] items-center justify-center gap-x-2 rounded-lg border px-2 py-1"
 					>
 						<span class="self-end text-sm">{restaurant.name}</span>
-						<i class="fa-solid fa-up-right-from-square row-span-2 text-sm"></i>
+						<i class="fa-solid fa-up-right-from-square row-span-2 text-xs"></i>
 						<span class="menu-item__description self-start text-xs">{restaurant.description}</span>
 					</a>
 				{/each}
