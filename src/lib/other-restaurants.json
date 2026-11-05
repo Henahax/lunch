@@ -48,5 +48,25 @@
 		"name": "we love pelmeni",
 		"description": "Osteuropäisch",
 		"url": "https://www.welovepelmeni-muenchen.de/speisekarte"
+	},
+	{
+		"name": "hans im glück",
+		"description": "Fast Food, Salate",
+		"url": "https://menu.hansimglueck-burgergrill.de/muenchen-giesing"
+	},
+	{
+		"name": "KÖY | Steak in Bread",
+		"description": "Steak Döner",
+		"url": "https://www.werksviertel-mitte.de/gastronomie/koey/"
+	},
+	{
+		"name": "dean & david",
+		"description": "Gesunde Küche",
+		"url": "https://deananddavid.com/speisen-und-getraenke/"
+	},
+	{
+		"name": "Metzgerei Zeller",
+		"description": "Metzgerei",
+		"url": "https://www.facebook.com/MetzgereiZeller"
 	}
 ]
