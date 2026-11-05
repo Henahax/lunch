@@ -36,7 +36,7 @@
 	let collapsedRestaurantSlugs = $state<string[]>(data.collapsedSlugs ?? []);
 	let isMobileViewport = $state(false);
 	let restaurantDetailsReady = $state(false);
-	let otherRestaurantsOpen = $state(true);
+	let otherRestaurantsOpen = $state(false);
 	let otherRestaurantsOpenPreference = $state<boolean | null>(null);
 	// svelte-ignore state_referenced_locally
 	let mobileOpenSlug = $state<string | null>(data.mobileOpenSlug);
