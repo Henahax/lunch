@@ -79,7 +79,7 @@
 </script>
 
 {#if dailyMenus.length > 0}
-	<section class="grid gap-2">
+	<section class="grid gap-1">
 		<h4 class="menu-section-title px-1 text-lg font-semibold">Tagesgerichte</h4>
 		<div class="relative min-w-0">
 			<div
@@ -88,11 +88,11 @@
 				role="region"
 				aria-label="Tagesgerichte nach Wochentag"
 				onscroll={updateScrollButtons}
-				class="daily-menu-carousel grid min-w-0 snap-x snap-mandatory auto-cols-[88%] grid-flow-col gap-2 overflow-x-auto overscroll-x-contain pb-2 sm:snap-none sm:auto-cols-auto sm:grid-flow-row sm:grid-cols-2 sm:overflow-visible sm:pb-0 lg:grid-cols-5"
+				class="daily-menu-carousel grid min-w-0 snap-x snap-mandatory auto-cols-[90%] grid-flow-col gap-1.5 overflow-x-auto overscroll-x-contain sm:snap-none sm:auto-cols-auto sm:grid-flow-row sm:grid-cols-2 sm:overflow-visible lg:grid-cols-5"
 			>
 				{#each days as day (day.date)}
 					<div
-						class="menu-card menu-day flex min-w-0 snap-center flex-col gap-4 rounded-lg px-3 py-2 sm:snap-none"
+						class="menu-card menu-day flex min-w-0 snap-center flex-col gap-4 rounded-lg px-3 py-1.5 sm:snap-none"
 						class:menu-day--today={day.date === todayDate}
 						class:menu-day--selected={day.date === closestDayDate}
 						class:opacity-60={day.date !== todayDate && (hasCurrentDay || isLastWeek)}

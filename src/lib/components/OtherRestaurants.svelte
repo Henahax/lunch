@@ -25,7 +25,7 @@
 			onclick={() => (userInitiatedToggle = true)}
 			class="restaurant-card__summary flex cursor-pointer items-center gap-1 px-2 py-1 text-xl font-bold"
 		>
-			<h2 id="other-restaurants-title" class="inline">Weitere Restaurants</h2>
+			<h2 id="other-restaurants-title" class="inline">Weitere Imbisse & Restaurants</h2>
 		</summary>
 		<div class="restaurant-card__content grid gap-2 p-2 pt-0">
 			<nav

@@ -49,10 +49,12 @@
 	<div class="drawer-panel flex h-full flex-col border-0 sm:border-r">
 		<header class="drawer-header flex items-start justify-between gap-4 border-b p-5">
 			<div>
-				<h2 id="restaurants-title" class="text-2xl font-semibold">Angezeigte Restaurants</h2>
+				<h2 id="restaurants-title" class="text-2xl font-semibold">
+					Angezeigte Imbisse & Restaurants
+				</h2>
 				<p class="mt-2 text-sm">
-					Ziehe Restaurants zum Sortieren oder nutze die Pfeile. Mit dem Häkchen blendest du sie auf
-					der Hauptseite ein oder aus.
+					Ziehe Imbisse & Restaurants zum Sortieren oder nutze die Pfeile. Mit dem Häkchen blendest
+					du sie auf der Hauptseite ein oder aus.
 				</p>
 			</div>
 			<button

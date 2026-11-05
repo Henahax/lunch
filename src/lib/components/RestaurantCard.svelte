@@ -60,14 +60,14 @@
 		/>
 
 		{#each weeklyMenus as menu (menu.id)}
-			<section class="grid gap-2" class:opacity-70={isLastWeek}>
+			<section class="grid gap-1" class:opacity-70={isLastWeek}>
 				<div class="flex flex-wrap items-baseline justify-between gap-2 px-1">
 					<h4 class="menu-section-title text-lg font-semibold">Wochenangebote</h4>
 					<p class="menu-period inline-flex items-center gap-1 self-start text-xs">
 						{formatDate(menu.validFrom)} – {formatDate(menu.validUntil)}
 					</p>
 				</div>
-				<div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+				<div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,11rem),1fr))] gap-1.5">
 					{#each menu.items as item (item.id)}
 						{@const title = withoutPrices(item.code ? `${item.code} – ${item.name}` : item.name)}
 						{@const category = item.category ? withoutPrices(item.category) : null}
@@ -76,7 +76,7 @@
 							`${item.name} ${item.category ?? ''} ${item.description}`
 						)}
 						<div
-							class="menu-card menu-item menu-item--weekly flex flex-col rounded px-3 py-2"
+							class="menu-card menu-item menu-item--weekly flex flex-col rounded px-3 py-1.5"
 							class:menu-item--favorite={matches.length > 0}
 						>
 							{#if category}<p class="menu-item__category text-sm font-semibold">{category}</p>{/if}
