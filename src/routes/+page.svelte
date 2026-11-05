@@ -35,6 +35,7 @@
 	// svelte-ignore state_referenced_locally
 	let collapsedRestaurantSlugs = $state<string[]>(data.collapsedSlugs ?? []);
 	let isMobileViewport = $state(false);
+	let restaurantDetailsReady = $state(false);
 	let otherRestaurantsOpen = $state(true);
 	let otherRestaurantsOpenPreference = $state<boolean | null>(null);
 	// svelte-ignore state_referenced_locally
@@ -487,6 +488,7 @@
 		} catch {
 			collapsedRestaurantSlugs = [];
 		}
+		restaurantDetailsReady = true;
 
 		try {
 			const storedFavorites = localStorage.getItem(favoritesStorageKey);
@@ -584,9 +586,10 @@
 						{formatDate}
 						{withoutPrices}
 						{matchingFavorites}
-						isOpen={isMobileViewport
-							? !otherRestaurantsOpen && mobileAccordionOpenSlug === restaurant.slug
-							: !collapsedRestaurantSlugs.includes(restaurant.slug)}
+						isOpen={restaurantDetailsReady &&
+							(isMobileViewport
+								? !otherRestaurantsOpen && mobileAccordionOpenSlug === restaurant.slug
+								: !collapsedRestaurantSlugs.includes(restaurant.slug))}
 						onToggle={toggleRestaurantDetails}
 					/>
 				{/each}
