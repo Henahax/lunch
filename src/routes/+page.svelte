@@ -9,6 +9,11 @@
 	import RestaurantCard from '#lib/components/RestaurantCard.svelte';
 	import RestaurantSettingsDrawer from '#lib/components/RestaurantSettingsDrawer.svelte';
 	import favoriteSuggestions from '#lib/favorite-suggestions.json';
+	import {
+		findFavoriteReminderMatches,
+		normalizeForSearch,
+		withoutPrices
+	} from '#lib/menu-matching.js';
 	import otherRestaurants from '#lib/other-restaurants.json';
 	import type { PageProps } from './$types';
 
@@ -19,6 +24,8 @@
 	const restaurantCookieName = 'lunch-hidden-restaurants';
 	const restaurantOrderCookieName = 'lunch-restaurant-order';
 	const restaurantCollapsedCookieName = 'lunch-collapsed-restaurants';
+	const restaurantMobileOpenCookieName = 'lunch-mobile-open-restaurant';
+	const otherRestaurantsOpenCookieName = 'lunch-other-restaurants-open';
 
 	let { data }: PageProps = $props();
 	let favoriteDialog = $state<HTMLDialogElement | null>(null);
@@ -27,6 +34,13 @@
 	let restaurantOrder = $state<string[]>([]);
 	// svelte-ignore state_referenced_locally
 	let collapsedRestaurantSlugs = $state<string[]>(data.collapsedSlugs ?? []);
+	let isMobileViewport = $state(false);
+	let otherRestaurantsOpen = $state(true);
+	let otherRestaurantsOpenPreference = $state<boolean | null>(null);
+	// svelte-ignore state_referenced_locally
+	let mobileOpenSlug = $state<string | null>(data.mobileOpenSlug);
+	// svelte-ignore state_referenced_locally
+	let hasMobileAccordionPreference = $state(data.hasMobileAccordionPreference);
 	let favorites = $state(['']);
 	let favoriteReminderEnabled = $state([false]);
 	let shuffledFavoriteSuggestions = $state<string[]>([]);
@@ -50,6 +64,9 @@
 	);
 	const visibleRestaurants = $derived(
 		selectedRestaurants.filter((restaurant) => restaurant.menus.length > 0)
+	);
+	const mobileAccordionOpenSlug = $derived(
+		hasMobileAccordionPreference ? mobileOpenSlug : (visibleRestaurants[0]?.slug ?? null)
 	);
 	const unavailableRestaurants = $derived(
 		selectedRestaurants
@@ -104,20 +121,12 @@
 	}).format(today);
 
 	function formatDate(date: string): string {
-		return new SvelteDate(`${date}T00:00:00`).toLocaleDateString('de-DE', {
-			day: 'numeric',
-			month: 'long'
-		});
-	}
-
-	function normalizeForSearch(value: string): string {
-		return value
-			.toLocaleLowerCase('de-DE')
-			.replace(/ß/g, 'ss')
-			.normalize('NFD')
-			.replace(/\p{M}/gu, '')
-			.replace(/[^\p{L}\p{N}]+/gu, ' ')
-			.trim();
+		return new SvelteDate(`${date}T00:00:00`)
+			.toLocaleDateString('de-DE', {
+				day: 'numeric',
+				month: 'long'
+			})
+			.replace(' ', '\u00a0');
 	}
 
 	function matchingFavorites(value: string): string[] {
@@ -217,7 +226,42 @@
 		document.cookie = `${restaurantCollapsedCookieName}=${encodeURIComponent(JSON.stringify(collapsedRestaurantSlugs))}; path=/; max-age=31536000; samesite=lax`;
 	}
 
+	function persistMobileOpenRestaurant() {
+		document.cookie = `${restaurantMobileOpenCookieName}=${encodeURIComponent(mobileOpenSlug ?? '')}; path=/; max-age=31536000; samesite=lax`;
+	}
+
+	function persistOtherRestaurantsOpen(open: boolean) {
+		otherRestaurantsOpen = open;
+		otherRestaurantsOpenPreference = open;
+		document.cookie = `${otherRestaurantsOpenCookieName}=${open}; path=/; max-age=31536000; samesite=lax`;
+	}
+
+	function toggleOtherRestaurants(open: boolean, userInitiated: boolean) {
+		if (isMobileViewport && open && userInitiated) {
+			mobileOpenSlug = null;
+			hasMobileAccordionPreference = true;
+			persistMobileOpenRestaurant();
+		}
+		if (userInitiated) {
+			persistOtherRestaurantsOpen(open);
+		} else {
+			otherRestaurantsOpen = open;
+		}
+	}
+
 	function toggleRestaurantDetails(slug: string, open: boolean) {
+		if (isMobileViewport) {
+			if (open) {
+				mobileOpenSlug = slug;
+				persistOtherRestaurantsOpen(false);
+			} else if (mobileOpenSlug === slug) {
+				mobileOpenSlug = null;
+			}
+			hasMobileAccordionPreference = true;
+			persistMobileOpenRestaurant();
+			return;
+		}
+
 		if (open) {
 			if (collapsedRestaurantSlugs.includes(slug)) {
 				collapsedRestaurantSlugs = collapsedRestaurantSlugs.filter(
@@ -285,20 +329,6 @@
 		return refreshPromise;
 	}
 
-	function withoutPrices(value: string): string {
-		return value
-			.replace(/(?:\s*\.\s*){4,}.*$/u, '')
-			.replace(/(?:\s*[·…]\s*){2,}.*$/u, '')
-			.replace(
-				/\s*\(?\s*(?:\d+(?:[.,]\d{2})\s*€|€\s*\d+(?:[.,]\d{2})|\d+(?:[.,]\d{2})\s*EUR)\s*\)?/gi,
-				''
-			)
-			.replace(/\b(?:Preis|Kosten)\s*:\s*/gi, '')
-			.replace(/\s*[|•]\s*$/g, '')
-			.replace(/\s+/g, ' ')
-			.trim();
-	}
-
 	function isStale(timestamp: number): boolean {
 		return Date.now() - timestamp > 7 * 24 * 60 * 60 * 1000;
 	}
@@ -331,6 +361,8 @@
 
 		const parts = berlinDateParts();
 		const todayKey = `${parts.year}-${parts.month}-${parts.day}`;
+		const weekday = new SvelteDate(`${todayKey}T00:00:00Z`).getUTCDay();
+		if (weekday === 0 || weekday === 6) return;
 		if (Number(parts.hour) < 11 || Number(parts.hour) >= 20) return;
 		if (!force && localStorage.getItem(lastReminderScanStorageKey) === todayKey) return;
 
@@ -354,36 +386,14 @@
 					? deliveredValue.filter((key): key is string => typeof key === 'string')
 					: []
 			);
-			const newMatches: { key: string; text: string }[] = [];
-			const queued = new SvelteSet<string>();
-
-			for (const restaurant of visibleRestaurants) {
-				for (const menu of restaurant.menus) {
-					if (menu.validFrom > todayKey || menu.validUntil < todayKey) continue;
-					if (
-						menu.menuType === 'weekly' &&
-						todayKey !== (menu.validFrom > weekKey ? menu.validFrom : weekKey)
-					)
-						continue;
-					for (const item of menu.items) {
-						const menuText = normalizeForSearch(
-							withoutPrices(`${item.name} ${item.category ?? ''} ${item.description}`)
-						);
-						for (let index = 0; index < favorites.length; index++) {
-							const favorite = normalizeForSearch(favorites[index]);
-							if (!favoriteReminderEnabled[index] || !favorite || !menuText.includes(favorite))
-								continue;
-							const key = `${menu.menuType}:${menu.menuType === 'daily' ? todayKey : weekKey}:${favorite}:${restaurant.id}:${item.id}`;
-							if (delivered.has(key) || queued.has(key)) continue;
-							queued.add(key);
-							newMatches.push({
-								key,
-								text: `${menu.menuType === 'daily' ? 'Tagesgericht' : 'Wochenangebot'}: ${restaurant.restaurantName} – ${withoutPrices(item.name)}`
-							});
-						}
-					}
-				}
-			}
+			const newMatches = findFavoriteReminderMatches({
+				restaurants: visibleRestaurants,
+				favorites,
+				reminderEnabled: favoriteReminderEnabled,
+				todayKey,
+				weekKey,
+				delivered
+			});
 
 			localStorage.setItem(lastReminderScanStorageKey, todayKey);
 			if (newMatches.length > 0) {
@@ -408,6 +418,29 @@
 	}
 
 	onMount(() => {
+		const mobileViewport = window.matchMedia('(max-width: 639px)');
+		const syncMobileViewport = () => {
+			isMobileViewport = mobileViewport.matches;
+			otherRestaurantsOpen = otherRestaurantsOpenPreference ?? !isMobileViewport;
+		};
+
+		try {
+			const cookie = document.cookie
+				.split('; ')
+				.find((entry) => entry.startsWith(`${otherRestaurantsOpenCookieName}=`));
+			if (cookie) {
+				const value = decodeURIComponent(cookie.slice(otherRestaurantsOpenCookieName.length + 1));
+				if (value === 'true' || value === 'false') {
+					otherRestaurantsOpenPreference = value === 'true';
+				}
+			}
+		} catch {
+			otherRestaurantsOpenPreference = null;
+		}
+
+		syncMobileViewport();
+		mobileViewport.addEventListener('change', syncMobileViewport);
+
 		restaurantOrder = data.restaurants.map((restaurant) => restaurant.slug);
 		shuffledFavoriteSuggestions = [...favoriteSuggestions];
 		for (let index = shuffledFavoriteSuggestions.length - 1; index > 0; index--) {
@@ -487,6 +520,7 @@
 		document.addEventListener('visibilitychange', check);
 		check();
 		return () => {
+			mobileViewport.removeEventListener('change', syncMobileViewport);
 			window.clearInterval(interval);
 			window.removeEventListener('online', refreshWhenOnline);
 			document.removeEventListener('visibilitychange', check);
@@ -499,8 +533,8 @@
 		{favoriteCount}
 		visibleRestaurantCount={selectedRestaurants.length}
 		totalRestaurantCount={data.restaurants.length}
-		weekNumber={getCalendarWeek(today)}
-		dateLabel={today.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })}
+		weekNumber={getCalendarWeek(new SvelteDate(`${todayDate}T00:00:00Z`))}
+		dateLabel={formatDate(todayDate)}
 		onOpenFavorites={() => favoriteDialog?.showModal()}
 		onOpenRestaurants={() => restaurantDialog?.showModal()}
 		onOpenInfo={() => infoDialog?.showModal()}
@@ -546,10 +580,13 @@
 						{restaurant}
 						{days}
 						{todayDate}
+						isLastWeek={data.isLastWeek}
 						{formatDate}
 						{withoutPrices}
 						{matchingFavorites}
-						isOpen={!collapsedRestaurantSlugs.includes(restaurant.slug)}
+						isOpen={isMobileViewport
+							? !otherRestaurantsOpen && mobileAccordionOpenSlug === restaurant.slug
+							: !collapsedRestaurantSlugs.includes(restaurant.slug)}
 						onToggle={toggleRestaurantDetails}
 					/>
 				{/each}
@@ -566,7 +603,11 @@
 			{/if}
 		</section>
 
-		<OtherRestaurants restaurants={otherRestaurants} />
+		<OtherRestaurants
+			restaurants={otherRestaurants}
+			isOpen={otherRestaurantsOpen}
+			onToggle={toggleOtherRestaurants}
+		/>
 	</main>
 	<footer class="flex p-4 text-xs">
 		<span class="grow text-center">© {currentYear} henahax.net</span>

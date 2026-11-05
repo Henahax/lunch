@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, lte } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, lte } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 import { db } from '../lib/server/db';
 import { menuItems, menus, restaurants, sourceImportStatus } from '../lib/server/db/schema';
@@ -7,6 +7,7 @@ import { restaurantCatalog } from '../lib/server/restaurants/sources';
 // Set the restaurant display order here using their slugs. Unlisted restaurants follow alphabetically.
 const restaurantOrderCookieName = 'lunch-restaurant-order';
 const restaurantCollapsedCookieName = 'lunch-collapsed-restaurants';
+const restaurantMobileOpenCookieName = 'lunch-mobile-open-restaurant';
 const restaurantDisplayOrder = [
 	'khanittha',
 	'zum-riederstein',
@@ -15,7 +16,7 @@ const restaurantDisplayOrder = [
 	'vinzenzmurr'
 ];
 
-function currentWeekRange(): { monday: string; friday: string } {
+function displayWeekRange(): { monday: string; friday: string } {
 	const berlinDate = new Intl.DateTimeFormat('en-CA', {
 		timeZone: 'Europe/Berlin',
 		year: 'numeric',
@@ -25,18 +26,16 @@ function currentWeekRange(): { monday: string; friday: string } {
 	const today = new Date(`${berlinDate}T00:00:00Z`);
 	const daysSinceMonday = (today.getUTCDay() + 6) % 7;
 	today.setUTCDate(today.getUTCDate() - daysSinceMonday);
+	if (new Date(`${berlinDate}T00:00:00Z`).getUTCDay() === 0) {
+		today.setUTCDate(today.getUTCDate() + 7);
+	}
 	const monday = today.toISOString().slice(0, 10);
 	today.setUTCDate(today.getUTCDate() + 4);
 	return { monday, friday: today.toISOString().slice(0, 10) };
 }
 
-export const load: PageServerLoad = async ({ cookies }) => {
-	const { monday, friday } = currentWeekRange();
-	const importStatuses = await db
-		.select()
-		.from(sourceImportStatus)
-		.orderBy(asc(sourceImportStatus.restaurantName));
-	const rows = await db
+function getMenuRows(monday: string, friday: string) {
+	return db
 		.select({
 			restaurantId: restaurants.id,
 			restaurantSlug: restaurants.slug,
@@ -63,6 +62,35 @@ export const load: PageServerLoad = async ({ cookies }) => {
 			asc(menus.validFrom),
 			asc(menuItems.position)
 		);
+}
+
+export const load: PageServerLoad = async ({ cookies }) => {
+	let { monday, friday } = displayWeekRange();
+	const importStatuses = await db
+		.select()
+		.from(sourceImportStatus)
+		.orderBy(asc(sourceImportStatus.restaurantName));
+	let rows = await getMenuRows(monday, friday);
+	let isLastWeek = false;
+
+	if (rows.length === 0) {
+		const [latestMenu] = await db
+			.select({ validFrom: menus.validFrom })
+			.from(menus)
+			.where(lte(menus.validFrom, monday))
+			.orderBy(desc(menus.validFrom))
+			.limit(1);
+
+		if (latestMenu) {
+			const latestDate = new Date(`${latestMenu.validFrom}T00:00:00Z`);
+			latestDate.setUTCDate(latestDate.getUTCDate() - ((latestDate.getUTCDay() + 6) % 7));
+			monday = latestDate.toISOString().slice(0, 10);
+			latestDate.setUTCDate(latestDate.getUTCDate() + 4);
+			friday = latestDate.toISOString().slice(0, 10);
+			rows = await getMenuRows(monday, friday);
+			isLastWeek = rows.length > 0;
+		}
+	}
 
 	const groupedRestaurants = new Map<
 		string,
@@ -165,9 +193,16 @@ export const load: PageServerLoad = async ({ cookies }) => {
 	const collapsedSlugs = Array.isArray(savedCollapsedSlugs)
 		? savedCollapsedSlugs.filter((slug): slug is string => typeof slug === 'string')
 		: [];
+	const savedMobileOpenSlug = cookies.get(restaurantMobileOpenCookieName);
+	const mobileOpenSlug = savedMobileOpenSlug && availableSlugs.has(savedMobileOpenSlug)
+		? savedMobileOpenSlug
+		: null;
+	const hasMobileAccordionPreference = savedMobileOpenSlug === '' || mobileOpenSlug !== null;
 
 	return {
 		weekStart: monday,
+		weekEnd: friday,
+		isLastWeek,
 		currentMenuSlugs: defaultRestaurants
 			.filter((restaurant) => restaurant.menus.length > 0)
 			.map((restaurant) => restaurant.slug),
@@ -175,6 +210,8 @@ export const load: PageServerLoad = async ({ cookies }) => {
 			(left, right) => orderIndex.get(left.slug)! - orderIndex.get(right.slug)!
 		),
 		collapsedSlugs,
+		mobileOpenSlug,
+		hasMobileAccordionPreference,
 		importStatuses
 	};
 };
