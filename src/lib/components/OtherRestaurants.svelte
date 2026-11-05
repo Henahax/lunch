@@ -25,9 +25,9 @@
 			onclick={() => (userInitiatedToggle = true)}
 			class="restaurant-card__summary flex cursor-pointer items-center gap-1 px-2 py-1 text-xl font-bold"
 		>
-			<h2 id="other-restaurants-title" class="inline">Weitere Imbisse & Restaurants</h2>
+			<h3 class="inline">Weitere Imbisse & Restaurants</h3>
 		</summary>
-		<div class="restaurant-card__content grid gap-2 p-2 pt-0">
+		<div class="restaurant-card__content grid gap-1.5 p-2 pt-0">
 			<nav
 				aria-labelledby="other-restaurants-title"
 				class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-1 overflow-hidden rounded"
