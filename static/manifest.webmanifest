@@ -1,6 +1,6 @@
 {
 	"id": "/",
-	"name": "Mittagessen Beta",
+	"name": "Mittagessen",
 	"short_name": "Mittagessen",
 	"description": "Mittagsgerichte und Wochenangebote in deiner Nähe.",
 	"start_url": "/",

@@ -25,7 +25,7 @@
 </script>
 
 <header
-	class="page-header col-span-full grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 p-2 lg:flex lg:gap-2"
+	class="page-header col-span-full grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 gap-y-2 p-2 lg:flex lg:gap-2"
 >
 	<h1 class="order-1 col-span-2 min-w-0 px-2 text-left text-2xl font-bold sm:text-3xl lg:grow">
 		<a
@@ -34,17 +34,19 @@
 			class="text-inherit no-underline transition-colors hover:text-white"
 			title="Zur Startseite (Aktualisieren)"
 		>
-			Mittagessen Beta
+			Mittagessen
 		</a>
 	</h1>
 
 	<div
-		class="order-2 col-span-1 grid grid-cols-[auto_auto] items-center gap-x-4 justify-self-end text-center lg:mr-8 lg:justify-self-end lg:text-right"
+		class="order-2 col-span-1 grid w-full max-w-44 min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 justify-self-end text-center sm:w-auto sm:max-w-none sm:grid-cols-[auto_auto] sm:gap-x-4 lg:mr-8 lg:justify-self-end lg:text-right"
 	>
 		<div class="text-xs">KW</div>
 		<div class="text-xs">Datum</div>
-		<div class="text-lg font-bold">{weekNumber}</div>
-		<div class="text-lg font-bold">{dateLabel}</div>
+		<div class="font-bold">{weekNumber}</div>
+		<div class="min-w-0 leading-tight font-bold wrap-break-word">
+			{dateLabel}
+		</div>
 	</div>
 
 	<button
