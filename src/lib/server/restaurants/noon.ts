@@ -89,6 +89,13 @@ function weekRange(year: number, week: number): { monday: string; friday: string
 	return { monday: monday.toISOString().slice(0, 10), friday: friday.toISOString().slice(0, 10) };
 }
 
+function nextIsoWeek(week: { year: number; week: number }): { year: number; week: number } {
+	const { monday } = weekRange(week.year, week.week);
+	const nextMonday = new Date(`${monday}T00:00:00Z`);
+	nextMonday.setUTCDate(nextMonday.getUTCDate() + 7);
+	return isoWeek(nextMonday);
+}
+
 function isWeekday(line: string): number | undefined {
 	return dayIndexes.get(line.replace(/\s/g, '').toLocaleUpperCase('de-DE'));
 }
@@ -100,13 +107,27 @@ function weeklyTitle(line: string, section: 'bowl' | 'salad'): string | null {
 	return null;
 }
 
-function parseMenuLines(lines: string[], week: { year: number; week: number }): ImportedMenuPlan[] {
+function parseMenuLines(
+	lines: string[],
+	currentWeek: { year: number; week: number },
+	allowNextWeek: boolean
+): ImportedMenuPlan[] {
 	const weekNumber = lines.map((line) => line.match(/^KW\s*(\d{1,2})$/i)).find(Boolean)?.[1];
-	if (!weekNumber || Number(weekNumber) !== week.week) {
-		throw new Error(`PDF enthält nicht die aktuelle Kalenderwoche (PDF: KW ${weekNumber ?? '?'}).`);
+	const pdfWeek = Number(weekNumber);
+	const upcomingWeek = nextIsoWeek(currentWeek);
+	const isCurrentWeek = pdfWeek === currentWeek.week;
+	const isNextWeek = allowNextWeek && pdfWeek === upcomingWeek.week;
+	if (!weekNumber || (!isCurrentWeek && !isNextWeek)) {
+		const expectedWeeks = allowNextWeek
+			? `${currentWeek.week} oder ${upcomingWeek.week}`
+			: `${currentWeek.week}`;
+		throw new Error(
+			`PDF enthält keine erwartete Kalenderwoche (erwartet: KW ${expectedWeeks}; PDF: KW ${weekNumber ?? '?'}).`
+		);
 	}
 
-	const { monday, friday } = weekRange(week.year, week.week);
+	const menuWeek = isNextWeek ? upcomingWeek : currentWeek;
+	const { monday, friday } = weekRange(menuWeek.year, menuWeek.week);
 	const dayItems: ImportedMenuItem[][] = weekdays.map(() => []);
 	const weeklyItems: WeeklyItem[] = [];
 	let dayIndex: number | undefined;
@@ -271,10 +292,16 @@ export async function importNoonMenu(now = new Date()) {
 		}
 
 		const currentWeek = isoWeek(now);
+		const berlinWeekday = new Date(`${berlinDate(now)}T00:00:00Z`).getUTCDay();
+		const allowNextWeek = berlinWeekday === 6 || berlinWeekday === 0;
 
 		const page = await document.getPage(1);
 		const content = await page.getTextContent();
-		plans = parseMenuLines(extractPdfLines(content.items).map(normalizeLabel), currentWeek);
+		plans = parseMenuLines(
+			extractPdfLines(content.items).map(normalizeLabel),
+			currentWeek,
+			allowNextWeek
+		);
 		page.cleanup();
 	} finally {
 		await loadingTask.destroy();
