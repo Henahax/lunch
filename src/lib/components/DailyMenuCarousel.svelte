@@ -6,27 +6,16 @@
 		restaurant: Restaurant;
 		days: RestaurantDay[];
 		todayDate: string;
-		isLastWeek: boolean;
+		isStale: boolean;
 		isOpen: boolean;
 		withoutPrices: (value: string) => string;
 		matchingFavorites: (value: string) => string[];
 	}
 
-	let { restaurant, days, todayDate, isLastWeek, isOpen, withoutPrices, matchingFavorites }: Props =
+	let { restaurant, days, todayDate, isStale, isOpen, withoutPrices, matchingFavorites }: Props =
 		$props();
 	const dailyMenus = $derived(restaurant.menus.filter((menu) => menu.menuType === 'daily'));
-	const hasCurrentDay = $derived(days.some((day) => day.date === todayDate));
-	const closestDayDate = $derived.by(() => {
-		const firstDay = days[0];
-		if (!firstDay) return undefined;
-
-		const todayTime = new Date(`${todayDate}T00:00:00Z`).getTime();
-		return days.reduce((closest, day) => {
-			const dayDistance = Math.abs(new Date(`${day.date}T00:00:00Z`).getTime() - todayTime);
-			const closestDistance = Math.abs(new Date(`${closest.date}T00:00:00Z`).getTime() - todayTime);
-			return dayDistance < closestDistance ? day : closest;
-		}, firstDay).date;
-	});
+	const hasCurrentDay = $derived(!isStale && days.some((day) => day.date === todayDate));
 	let dailyCarousel = $state<HTMLDivElement | null>(null);
 	let canScrollBackward = $state(false);
 	let canScrollForward = $state(false);
@@ -38,18 +27,18 @@
 		canScrollForward = maxScrollLeft - dailyCarousel.scrollLeft > 1;
 	}
 
-	function scrollToClosestDay() {
+	function scrollToToday() {
 		if (!dailyCarousel) return;
-		const selectedDay = dailyCarousel.querySelector<HTMLElement>('.menu-day--selected');
-		if (!selectedDay) return;
+		const today = dailyCarousel.querySelector<HTMLElement>('.menu-day--today');
+		if (!today) return;
 
 		const containerRect = dailyCarousel.getBoundingClientRect();
-		const selectedRect = selectedDay.getBoundingClientRect();
+		const todayRect = today.getBoundingClientRect();
 		const centeredScrollLeft =
 			dailyCarousel.scrollLeft +
-			selectedRect.left -
+			todayRect.left -
 			containerRect.left -
-			(dailyCarousel.clientWidth - selectedDay.clientWidth) / 2;
+			(dailyCarousel.clientWidth - today.clientWidth) / 2;
 		const maxScrollLeft = dailyCarousel.scrollWidth - dailyCarousel.clientWidth;
 		dailyCarousel.scrollLeft = Math.max(0, Math.min(centeredScrollLeft, maxScrollLeft));
 		updateScrollButtons();
@@ -72,15 +61,18 @@
 	});
 
 	$effect(() => {
-		if (isOpen && closestDayDate && dailyCarousel) {
-			requestAnimationFrame(scrollToClosestDay);
+		if (isOpen && hasCurrentDay && dailyCarousel) {
+			requestAnimationFrame(scrollToToday);
 		}
 	});
 </script>
 
 {#if dailyMenus.length > 0}
 	<section class="grid gap-1">
-		<h4 class="menu-section-title px-1 text-lg font-semibold">Tagesgerichte</h4>
+		<div class="flex items-center gap-2 px-1">
+			<h4 class="menu-section-title text-lg font-semibold">Tagesgerichte</h4>
+			{#if isStale}<span class="stale-menu-age">Vorwoche</span>{/if}
+		</div>
 		<div class="relative min-w-0">
 			<div
 				bind:this={dailyCarousel}
@@ -93,15 +85,15 @@
 				{#each days as day (day.date)}
 					<div
 						class="menu-card menu-day flex min-w-0 snap-center flex-col gap-4 rounded-lg px-3 py-1.5 sm:snap-none"
-						class:menu-day--today={day.date === todayDate}
-						class:menu-day--selected={day.date === closestDayDate}
-						class:opacity-60={day.date !== todayDate && (hasCurrentDay || isLastWeek)}
+						class:menu-day--today={!isStale && day.date === todayDate}
+						class:opacity-60={day.date !== todayDate}
 					>
 						<h5
 							class="menu-day__title font-semibold capitalize"
-							aria-current={day.date === todayDate ? 'date' : undefined}
+							aria-current={!isStale && day.date === todayDate ? 'date' : undefined}
 						>
-							{day.name} <span class="font-normal">{day.label}</span>
+							{day.name}
+							<span class="font-normal" class:stale-menu-date={isStale}>{day.label}</span>
 						</h5>
 						{#each dailyMenus.filter((menu) => menu.validFrom === day.date) as menu (menu.id)}
 							{#each menu.items as item (item.id)}

@@ -6,10 +6,10 @@
 		restaurant: Restaurant;
 		days: RestaurantDay[];
 		todayDate: string;
-		isLastWeek: boolean;
 		formatDate: (date: string) => string;
 		withoutPrices: (value: string) => string;
 		matchingFavorites: (value: string) => string[];
+		isStale: boolean;
 		isOpen?: boolean;
 		onToggle?: (slug: string, open: boolean) => void;
 	}
@@ -18,10 +18,10 @@
 		restaurant,
 		days,
 		todayDate,
-		isLastWeek,
 		formatDate,
 		withoutPrices,
 		matchingFavorites,
+		isStale,
 		isOpen = true,
 		onToggle
 	}: Props = $props();
@@ -34,9 +34,15 @@
 	class="restaurant-card relative min-w-0 rounded-lg border"
 >
 	<summary
-		class="restaurant-card__summary flex cursor-pointer items-center gap-1 px-2 py-1 pr-12 text-xl font-bold"
+		class="restaurant-card__summary flex cursor-pointer flex-wrap items-center gap-1 px-2 py-1 pr-12 text-xl font-bold"
 	>
 		<h3 class="inline">{restaurant.restaurantName}</h3>
+		{#if isStale}
+			<span class="stale-menu-badge ml-2">
+				<i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+				<span>Vorwoche · nicht aktuell</span>
+			</span>
+		{/if}
 	</summary>
 	<a
 		href={restaurant.restaurantUrl}
@@ -53,18 +59,21 @@
 			{restaurant}
 			{days}
 			{todayDate}
-			{isLastWeek}
+			{isStale}
 			{isOpen}
 			{withoutPrices}
 			{matchingFavorites}
 		/>
 
 		{#each weeklyMenus as menu (menu.id)}
-			<section class="grid gap-1" class:opacity-70={isLastWeek}>
+			<section class="grid gap-1">
 				<div class="flex flex-wrap items-baseline justify-between gap-2 px-1">
 					<h4 class="menu-section-title text-lg font-semibold">Wochenangebote</h4>
 					<p class="menu-period inline-flex items-center gap-1 self-start text-xs">
-						{formatDate(menu.validFrom)} – {formatDate(menu.validUntil)}
+						{#if isStale}<span class="stale-menu-age">Vorwoche</span>{/if}
+						<span class:stale-menu-date={isStale}>
+							{formatDate(menu.validFrom)} – {formatDate(menu.validUntil)}
+						</span>
 					</p>
 				</div>
 				<div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,11rem),1fr))] gap-1.5">

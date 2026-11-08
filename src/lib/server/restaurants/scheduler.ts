@@ -21,7 +21,7 @@ const timeZone = 'Europe/Berlin';
 const importSchedule = [
 	// Wochentage verwenden die JavaScript-Zählung: 0 = Sonntag, 1 = Montag, ..., 6 = Samstag.
 	{ weekdays: [0, 1, 2, 3, 4, 5, 6], hour: 8, minute: 0 },
-	{ weekdays: [0, 1, 2], hour: 11, minute: 30 }
+	{ weekdays: [0, 1, 2, 3, 4, 5], hour: 11, minute: 30 }
 ];
 let started = false;
 let running = false;
