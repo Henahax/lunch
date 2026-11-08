@@ -48,7 +48,7 @@
 				<ul class="list-disc space-y-2 pl-5">
 					<li>
 						Tages- und Wochenangebote je Restaurant ansehen; Links führen zur Originalseite. Die
-						Karten werden beim Serverstart und täglich um 08:00 Uhr aktualisiert.
+						Karten werden jeden vormittag aktualisiert.
 					</li>
 					<li>
 						Lieblingsgerichte markieren passende Einträge. Über die Glocke gibt es Erinnerungen von
@@ -59,6 +59,10 @@
 						Restaurants ein- oder ausblenden und per Ziehen oder Pfeilen sortieren. Die Auswahl
 						bleibt ein Jahr in diesem Browser gespeichert.
 					</li>
+					<li>
+						Mobile und Desktop Bedienung unterscheiden sich ein wenig um der verfügbaren
+						Anzeigeplatz besser zu nutzen.
+					</li>
 					<li>Wünsche und Feedback gerne an Tobias richten.</li>
 				</ul>
 			</section>
@@ -66,7 +70,7 @@
 			<section class="grid gap-2" aria-labelledby="import-status-title">
 				<h3 id="import-status-title" class="text-sm font-semibold">Importstatus</h3>
 				{#each statuses as status (status.sourceSlug)}
-					<p class="text-xs" aria-live="polite">
+					<p class="text-xs opacity-60" aria-live="polite">
 						<span class="font-medium">{status.restaurantName}:</span>
 						{#if status.lastError}
 							Aktualisierung fehlgeschlagen.

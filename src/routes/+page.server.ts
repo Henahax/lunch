@@ -34,7 +34,7 @@ function displayWeekRange(): { monday: string; friday: string } {
 	return { monday, friday: today.toISOString().slice(0, 10) };
 }
 
-function getMenuRows(monday: string, friday: string) {
+function getMenuRows(monday: string, friday: string, restaurantSlug?: string) {
 	return db
 		.select({
 			restaurantId: restaurants.id,
@@ -55,7 +55,13 @@ function getMenuRows(monday: string, friday: string) {
 		.from(restaurants)
 		.innerJoin(menus, eq(menus.restaurantId, restaurants.id))
 		.leftJoin(menuItems, eq(menuItems.menuId, menus.id))
-		.where(and(lte(menus.validFrom, friday), gte(menus.validUntil, monday)))
+		.where(
+			and(
+				lte(menus.validFrom, friday),
+				gte(menus.validUntil, monday),
+				restaurantSlug ? eq(restaurants.slug, restaurantSlug) : undefined
+			)
+		)
 		.orderBy(
 			asc(restaurants.name),
 			asc(menus.menuType),
@@ -65,32 +71,58 @@ function getMenuRows(monday: string, friday: string) {
 }
 
 export const load: PageServerLoad = async ({ cookies }) => {
-	let { monday, friday } = displayWeekRange();
+	const { monday, friday } = displayWeekRange();
+	const previousMondayDate = new Date(`${monday}T00:00:00Z`);
+	previousMondayDate.setUTCDate(previousMondayDate.getUTCDate() - 7);
+	const previousMonday = previousMondayDate.toISOString().slice(0, 10);
+	const previousFridayDate = new Date(`${previousMonday}T00:00:00Z`);
+	previousFridayDate.setUTCDate(previousFridayDate.getUTCDate() + 4);
+	const previousFriday = previousFridayDate.toISOString().slice(0, 10);
 	const importStatuses = await db
 		.select()
 		.from(sourceImportStatus)
 		.orderBy(asc(sourceImportStatus.restaurantName));
-	let rows = await getMenuRows(monday, friday);
-	let isLastWeek = false;
-
-	if (rows.length === 0) {
-		const [latestMenu] = await db
-			.select({ validFrom: menus.validFrom })
+	const currentRows = await getMenuRows(monday, friday);
+	const currentMenuRestaurantIds = new Set(currentRows.map((row) => row.restaurantId));
+	let bindaasFallbackRows: Awaited<ReturnType<typeof getMenuRows>> = [];
+	if (!currentRows.some((row) => row.restaurantSlug === 'bindaas')) {
+		const [latestBindaasMenu] = await db
+			.select({ validFrom: menus.validFrom, validUntil: menus.validUntil })
 			.from(menus)
-			.where(lte(menus.validFrom, monday))
+			.innerJoin(restaurants, eq(menus.restaurantId, restaurants.id))
+			.where(
+				and(
+					eq(restaurants.slug, 'bindaas'),
+					eq(menus.menuType, 'weekly'),
+					lte(menus.validFrom, monday)
+				)
+			)
 			.orderBy(desc(menus.validFrom))
 			.limit(1);
-
-		if (latestMenu) {
-			const latestDate = new Date(`${latestMenu.validFrom}T00:00:00Z`);
-			latestDate.setUTCDate(latestDate.getUTCDate() - ((latestDate.getUTCDay() + 6) % 7));
-			monday = latestDate.toISOString().slice(0, 10);
-			latestDate.setUTCDate(latestDate.getUTCDate() + 4);
-			friday = latestDate.toISOString().slice(0, 10);
-			rows = await getMenuRows(monday, friday);
-			isLastWeek = rows.length > 0;
+		if (latestBindaasMenu) {
+			bindaasFallbackRows = (await getMenuRows(
+				latestBindaasMenu.validFrom,
+				latestBindaasMenu.validUntil,
+				'bindaas'
+			)).map((row) => ({ ...row, validFrom: monday, validUntil: friday }));
 		}
 	}
+	const activeMenuRestaurantIds = new Set(currentMenuRestaurantIds);
+	if (bindaasFallbackRows[0]) activeMenuRestaurantIds.add(bindaasFallbackRows[0].restaurantId);
+	const previousRows = await getMenuRows(previousMonday, previousFriday);
+	const staleMenuRestaurantIds = new Set(
+		previousRows
+			.filter(
+				(row) =>
+					!currentMenuRestaurantIds.has(row.restaurantId) && row.restaurantSlug !== 'bindaas'
+			)
+			.map((row) => row.restaurantId)
+	);
+	const rows = [
+		...currentRows,
+		...previousRows.filter((row) => staleMenuRestaurantIds.has(row.restaurantId)),
+		...bindaasFallbackRows
+	];
 
 	const groupedRestaurants = new Map<
 		string,
@@ -202,9 +234,12 @@ export const load: PageServerLoad = async ({ cookies }) => {
 	return {
 		weekStart: monday,
 		weekEnd: friday,
-		isLastWeek,
+		previousWeekStart: previousMonday,
 		currentMenuSlugs: defaultRestaurants
-			.filter((restaurant) => restaurant.menus.length > 0)
+			.filter((restaurant) => activeMenuRestaurantIds.has(restaurant.id))
+			.map((restaurant) => restaurant.slug),
+		staleMenuSlugs: defaultRestaurants
+			.filter((restaurant) => staleMenuRestaurantIds.has(restaurant.id))
 			.map((restaurant) => restaurant.slug),
 		restaurants: defaultRestaurants.sort(
 			(left, right) => orderIndex.get(left.slug)! - orderIndex.get(right.slug)!

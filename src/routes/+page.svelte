@@ -84,8 +84,8 @@
 	const pendingMenuRestaurants = $derived(
 		unavailableRestaurants.filter((restaurant) => !restaurant.importFailed).map(({ name }) => name)
 	);
-	const days = $derived.by(() => {
-		const monday = new SvelteDate(`${data.weekStart}T00:00:00Z`);
+	function getWeekDays(weekStart: string) {
+		const monday = new SvelteDate(`${weekStart}T00:00:00Z`);
 		return Array.from({ length: 5 }, (_, offset) => {
 			const date = new SvelteDate(monday);
 			date.setUTCDate(date.getUTCDate() + offset);
@@ -99,7 +99,9 @@
 				})
 			};
 		});
-	});
+	}
+	const days = $derived(getWeekDays(data.weekStart));
+	const previousWeekDays = $derived(getWeekDays(data.previousWeekStart));
 
 	const currentYear = new Date().getFullYear();
 
@@ -578,14 +580,15 @@
 				<p>Für die ausgewählten Imbisse & Restaurants liegen derzeit keine Menüs vor.</p>
 			{:else}
 				{#each visibleRestaurants as restaurant (restaurant.id)}
+					{@const hasStaleMenu = data.staleMenuSlugs.includes(restaurant.slug)}
 					<RestaurantCard
 						{restaurant}
-						{days}
+						days={hasStaleMenu ? previousWeekDays : days}
 						{todayDate}
-						isLastWeek={data.isLastWeek}
 						{formatDate}
 						{withoutPrices}
 						{matchingFavorites}
+						isStale={hasStaleMenu}
 						isOpen={restaurantDetailsReady &&
 							(isMobileViewport
 								? !otherRestaurantsOpen && mobileAccordionOpenSlug === restaurant.slug
