@@ -22,9 +22,13 @@ function stripAllergenCodes(value: string): string {
 }
 
 function normalizeLabel(value: string): string {
-	const compact = cleanText(value).replace(/\s/g, '').toLocaleUpperCase('de-DE');
+	const compact = cleanText(value)
+		.replace(/\s/g, '')
+		.replace(/[–—]/g, '-')
+		.toLocaleUpperCase('de-DE');
 	const labels: Record<string, string> = {
 		MONTAG: 'Montag',
+		'MONTAG-FREITAG': 'Montag – Freitag',
 		DIENSTAG: 'Dienstag',
 		MITTWOCH: 'Mittwoch',
 		DONNERSTAG: 'Donnerstag',
@@ -33,6 +37,8 @@ function normalizeLabel(value: string): string {
 		VEGETARISCH: 'Vegetarisch',
 		VEGAN: 'Vegan',
 		'WEEKLY-BOWL': 'Weekly Bowl',
+		WEEKLYBOWL: 'Weekly Bowl',
+		BOWL: 'Weekly Bowl',
 		WOCHENSALAT: 'Wochensalat',
 		SALAT: 'Salat'
 	};
