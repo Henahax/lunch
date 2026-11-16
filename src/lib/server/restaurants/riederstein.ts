@@ -2,9 +2,9 @@ import { load } from 'cheerio';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { extractPdfLines } from './pdf-text';
 import { storeRestaurantMenus, type ImportedMenuItem, type ImportedMenuPlan } from './store-menu';
+import { riedersteinSource as source } from './sources';
+import { berlinDate } from './date-utils';
 
-const websiteUrl = 'https://www.zumriederstein.de/';
-const restaurant = { slug: 'zum-riederstein', name: 'Zum Riederstein' };
 const maxPdfSize = 20_000_000;
 const pdfHosts = new Set(['www.zumriederstein.de', 'zumriederstein.de', 'filesusr.com']);
 
@@ -34,7 +34,7 @@ export function findRiedersteinMenuUrl(html: string): string {
 	const href = $(link).attr('href');
 	if (!href) throw new Error('Der Link zur Mittagskarte enthält keine URL.');
 
-	const url = new URL(href, websiteUrl);
+	const url = new URL(href, source.url);
 	const hostname = url.hostname.toLowerCase();
 	const trustedHost =
 		pdfHosts.has(hostname) ||
@@ -44,17 +44,6 @@ export function findRiedersteinMenuUrl(html: string): string {
 		throw new Error('Der Mittagskarten-Link führt nicht zu einer erwarteten HTTPS-PDF-Datei.');
 	}
 	return url.toString();
-}
-
-function berlinDate(date: Date): string {
-	const parts = new Intl.DateTimeFormat('en-CA', {
-		timeZone: 'Europe/Berlin',
-		year: 'numeric',
-		month: '2-digit',
-		day: '2-digit'
-	}).formatToParts(date);
-	const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-	return `${values.year}-${values.month}-${values.day}`;
 }
 
 function mondayOf(date: string): string {
@@ -148,7 +137,7 @@ export function parseRiedersteinMenu(lines: string[], now = new Date()): Importe
 }
 
 export async function importRiedersteinMenu(now = new Date()) {
-	const pageResponse = await fetch(websiteUrl, {
+	const pageResponse = await fetch(source.url, {
 		headers: { 'user-agent': 'LunchMenuBot/1.0 (weekly public menu import)' },
 		signal: AbortSignal.timeout(15_000)
 	});
@@ -200,5 +189,5 @@ export async function importRiedersteinMenu(now = new Date()) {
 			`Nur ${plan.items.length} von ${expectedItemCount} Gerichten mit Preis wurden erkannt.`
 		);
 	}
-	return storeRestaurantMenus(restaurant, pdfUrl, [plan], now.getTime(), websiteUrl);
+	return storeRestaurantMenus(source, pdfUrl, [plan], now.getTime(), source.url);
 }

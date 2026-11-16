@@ -16,6 +16,15 @@ export type ImportedMenuPlan = {
 	items: ImportedMenuItem[];
 };
 
+export type ImportedMenuResult = {
+	restaurant: string;
+	menuCount: number;
+	itemCount: number;
+	validFrom: string;
+	validUntil: string;
+	fetchedAt: number;
+};
+
 type RestaurantIdentity = {
 	slug: string;
 	name: string;
@@ -27,12 +36,16 @@ export function storeRestaurantMenus(
 	plans: ImportedMenuPlan[],
 	fetchedAt: number,
 	restaurantUrl = sourceUrl
-) {
+): ImportedMenuResult {
 	if (plans.length === 0) throw new Error('Der Import enthält keine Speisepläne.');
 
 	return db.transaction((tx) => {
 		tx.insert(restaurants)
-			.values({ ...restaurant, sourceUrl: restaurantUrl })
+			.values({
+				slug: restaurant.slug,
+				name: restaurant.name,
+				sourceUrl: restaurantUrl
+			})
 			.onConflictDoUpdate({
 				target: restaurants.slug,
 				set: { name: restaurant.name, sourceUrl: restaurantUrl }

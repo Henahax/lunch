@@ -1,9 +1,8 @@
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { storeRestaurantMenus, type ImportedMenuItem, type ImportedMenuPlan } from './store-menu';
 import { extractPdfLines } from './pdf-text';
-
-const sourceUrl = 'https://noon-food.com/karte/wochenspeisekarte.pdf';
-const restaurant = { slug: 'noon-food', name: 'noon food' };
+import { noonSource as source } from './sources';
+import { berlinDate } from './date-utils';
 const weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
 const dayIndexes = new Map(weekdays.map((day, index) => [day.toLocaleUpperCase('de-DE'), index]));
 
@@ -47,20 +46,6 @@ function normalizeLabel(value: string): string {
 		return value.replace(/^V\s*e\s*g\s*e\s*t\s*a\s*r\s*i\s*s\s*c\s*h\s*:/i, 'Vegetarisch:');
 	}
 	return cleanText(value);
-}
-
-function berlinDate(date: Date): string {
-	const values = Object.fromEntries(
-		new Intl.DateTimeFormat('en-CA', {
-			timeZone: 'Europe/Berlin',
-			year: 'numeric',
-			month: '2-digit',
-			day: '2-digit'
-		})
-			.formatToParts(date)
-			.map(({ type, value }) => [type, value])
-	);
-	return `${values.year}-${values.month}-${values.day}`;
 }
 
 function isoWeek(date: Date): { year: number; week: number } {
@@ -265,7 +250,7 @@ function parseMenuLines(
 }
 
 export async function importNoonMenu(now = new Date()) {
-	const response = await fetch(sourceUrl, {
+	const response = await fetch(source.url, {
 		headers: { 'user-agent': 'LunchMenuBot/1.0 (weekly public menu import)' },
 		signal: AbortSignal.timeout(20_000)
 	});
@@ -313,5 +298,5 @@ export async function importNoonMenu(now = new Date()) {
 		await loadingTask.destroy();
 	}
 
-	return storeRestaurantMenus(restaurant, sourceUrl, plans, now.getTime());
+	return storeRestaurantMenus(source, source.url, plans, now.getTime());
 }

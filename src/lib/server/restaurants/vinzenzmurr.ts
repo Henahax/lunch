@@ -1,9 +1,7 @@
 import { load } from 'cheerio';
 import type { AnyNode } from 'domhandler';
 import { storeRestaurantMenus, type ImportedMenuItem, type ImportedMenuPlan } from './store-menu';
-
-const sourceUrl = 'https://vinzenzmurr.de/wochenkarte/';
-const restaurant = { slug: 'vinzenzmurr', name: 'Vinzenzmurr' };
+import { vinzenzmurrSource as source } from './sources';
 
 const weekdays = [
 	['montag', 1],
@@ -37,9 +35,9 @@ function parseDateRange(title: string, now: Date): { validFrom: string; validUnt
 	const currentYear = now.getUTCFullYear();
 	const endYear = Number(
 		endYearText ??
-		(startYearText
-			? Number(startYearText) + (Number(fromMonth) > Number(untilMonth) ? 1 : 0)
-			: currentYear)
+			(startYearText
+				? Number(startYearText) + (Number(fromMonth) > Number(untilMonth) ? 1 : 0)
+				: currentYear)
 	);
 	const startYear = Number(
 		startYearText ?? (Number(fromMonth) > Number(untilMonth) ? endYear - 1 : endYear)
@@ -242,11 +240,11 @@ export function parseVinzenzmurrMenu(html: string, now = new Date()): ImportedMe
 }
 
 export async function importVinzenzmurrMenu(now = new Date()) {
-	const response = await fetch(sourceUrl, {
+	const response = await fetch(source.url, {
 		headers: { 'user-agent': 'LunchMenuBot/1.0 (weekly public menu import)' },
 		signal: AbortSignal.timeout(20_000)
 	});
 	if (!response.ok) throw new Error(`Vinzenzmurr-Seite antwortete mit HTTP ${response.status}.`);
 	const plans = parseVinzenzmurrMenu(await response.text(), now);
-	return storeRestaurantMenus(restaurant, sourceUrl, plans, now.getTime());
+	return storeRestaurantMenus(source, source.url, plans, now.getTime());
 }
