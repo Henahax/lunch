@@ -1,12 +1,8 @@
 import { load } from 'cheerio';
 import type { AnyNode } from 'domhandler';
 import { storeRestaurantMenus, type ImportedMenuItem } from './store-menu';
-
-const sourceUrl = 'https://khanittha.de/';
-const restaurant = {
-	slug: 'khanittha',
-	name: 'Khanittha'
-};
+import { khanitthaSource as source } from './sources';
+import { berlinDate } from './date-utils';
 const maxRetryDelayMs = 5 * 60 * 1000;
 const fallbackRetryDelayMs = 60 * 1000;
 
@@ -18,17 +14,6 @@ export type ImportedWeeklyMenu = {
 
 function cleanText(value: string): string {
 	return value.replace(/\s+/g, ' ').trim();
-}
-
-function dateInBerlin(date: Date): string {
-	const parts = new Intl.DateTimeFormat('en-CA', {
-		timeZone: 'Europe/Berlin',
-		year: 'numeric',
-		month: '2-digit',
-		day: '2-digit'
-	}).formatToParts(date);
-	const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-	return `${values.year}-${values.month}-${values.day}`;
 }
 
 function distanceToRange(date: string, from: string, until: string): number {
@@ -46,7 +31,7 @@ function parseValidityPeriod(title: string, now: Date): { validFrom: string; val
 	if (!match) throw new Error(`Gültigkeitszeitraum im Titel nicht erkannt: ${title}`);
 
 	const [, fromDay, fromMonth, untilDay, untilMonth, explicitYear] = match;
-	const today = dateInBerlin(now);
+	const today = berlinDate(now);
 	const currentYear = Number(today.slice(0, 4));
 	const candidates = (
 		explicitYear ? [Number(explicitYear)] : [currentYear - 1, currentYear, currentYear + 1]
@@ -59,7 +44,7 @@ function parseValidityPeriod(title: string, now: Date): { validFrom: string; val
 
 	return candidates.reduce((closest, candidate) =>
 		distanceToRange(today, candidate.validFrom, candidate.validUntil) <
-			distanceToRange(today, closest.validFrom, closest.validUntil)
+		distanceToRange(today, closest.validFrom, closest.validUntil)
 			? candidate
 			: closest
 	);
@@ -76,7 +61,7 @@ function retryDelay(response: Response): number | null {
 
 async function fetchMenuPage(): Promise<Response> {
 	const request = () =>
-		fetch(sourceUrl, {
+		fetch(source.url, {
 			headers: {
 				'user-agent': 'LunchMenuBot/1.0 (weekly public menu import)',
 				accept:
@@ -153,10 +138,5 @@ export async function importKhanitthaMenu(now = new Date()) {
 	if (!response.ok) throw new Error(`Restaurantseite antwortete mit HTTP ${response.status}.`);
 
 	const menu = parseKhanitthaMenu(await response.text(), now);
-	return storeRestaurantMenus(
-		restaurant,
-		sourceUrl,
-		[{ ...menu, menuType: 'weekly' }],
-		now.getTime()
-	);
+	return storeRestaurantMenus(source, source.url, [{ ...menu, menuType: 'weekly' }], now.getTime());
 }

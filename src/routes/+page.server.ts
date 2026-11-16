@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 import { db } from '../lib/server/db';
 import { menuItems, menus, restaurants, sourceImportStatus } from '../lib/server/db/schema';
 import { restaurantCatalog } from '../lib/server/restaurants/sources';
+import { parseStringArrayCookie } from '../lib/cookie-values';
 
 // Set the restaurant display order here using their slugs. Unlisted restaurants follow alphabetically.
 const restaurantOrderCookieName = 'lunch-restaurant-order';
@@ -100,11 +101,9 @@ export const load: PageServerLoad = async ({ cookies }) => {
 			.orderBy(desc(menus.validFrom))
 			.limit(1);
 		if (latestBindaasMenu) {
-			bindaasFallbackRows = (await getMenuRows(
-				latestBindaasMenu.validFrom,
-				latestBindaasMenu.validUntil,
-				'bindaas'
-			)).map((row) => ({ ...row, validFrom: monday, validUntil: friday }));
+			bindaasFallbackRows = (
+				await getMenuRows(latestBindaasMenu.validFrom, latestBindaasMenu.validUntil, 'bindaas')
+			).map((row) => ({ ...row, validFrom: monday, validUntil: friday }));
 		}
 	}
 	const activeMenuRestaurantIds = new Set(currentMenuRestaurantIds);
@@ -113,8 +112,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 	const staleMenuRestaurantIds = new Set(
 		previousRows
 			.filter(
-				(row) =>
-					!currentMenuRestaurantIds.has(row.restaurantId) && row.restaurantSlug !== 'bindaas'
+				(row) => !currentMenuRestaurantIds.has(row.restaurantId) && row.restaurantSlug !== 'bindaas'
 			)
 			.map((row) => row.restaurantId)
 	);
@@ -196,18 +194,10 @@ export const load: PageServerLoad = async ({ cookies }) => {
 		if (rightIndex === -1) return -1;
 		return leftIndex - rightIndex;
 	});
-	let savedOrder: unknown;
-	try {
-		savedOrder = JSON.parse(cookies.get(restaurantOrderCookieName) ?? '[]');
-	} catch {
-		savedOrder = [];
-	}
 	const availableSlugs = new Set(defaultRestaurants.map((restaurant) => restaurant.slug));
-	const validSavedOrder = Array.isArray(savedOrder)
-		? [...new Set(savedOrder.filter((slug): slug is string => typeof slug === 'string'))].filter(
-			(slug) => availableSlugs.has(slug)
-		)
-		: [];
+	const validSavedOrder = [
+		...new Set(parseStringArrayCookie(cookies.get(restaurantOrderCookieName)))
+	].filter((slug) => availableSlugs.has(slug));
 	const completeOrder = [
 		...validSavedOrder,
 		...defaultRestaurants
@@ -216,19 +206,10 @@ export const load: PageServerLoad = async ({ cookies }) => {
 	];
 	const orderIndex = new Map(completeOrder.map((slug, index) => [slug, index]));
 
-	let savedCollapsedSlugs: unknown;
-	try {
-		savedCollapsedSlugs = JSON.parse(cookies.get(restaurantCollapsedCookieName) ?? '[]');
-	} catch {
-		savedCollapsedSlugs = [];
-	}
-	const collapsedSlugs = Array.isArray(savedCollapsedSlugs)
-		? savedCollapsedSlugs.filter((slug): slug is string => typeof slug === 'string')
-		: [];
+	const collapsedSlugs = parseStringArrayCookie(cookies.get(restaurantCollapsedCookieName));
 	const savedMobileOpenSlug = cookies.get(restaurantMobileOpenCookieName);
-	const mobileOpenSlug = savedMobileOpenSlug && availableSlugs.has(savedMobileOpenSlug)
-		? savedMobileOpenSlug
-		: null;
+	const mobileOpenSlug =
+		savedMobileOpenSlug && availableSlugs.has(savedMobileOpenSlug) ? savedMobileOpenSlug : null;
 	const hasMobileAccordionPreference = savedMobileOpenSlug === '' || mobileOpenSlug !== null;
 
 	return {

@@ -1,9 +1,8 @@
 import { load } from 'cheerio';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { storeRestaurantMenus, type ImportedMenuItem } from './store-menu';
-
-const websiteUrl = 'https://www.bindaas.de/de/werksviertel';
-const restaurant = { slug: 'bindaas', name: 'Bindaas' };
+import { bindaasSource as source } from './sources';
+import { berlinDate } from './date-utils';
 const maxPdfSize = 20_000_000;
 
 type PdfTextItem = {
@@ -49,7 +48,7 @@ export function findBindaasMenuUrl(html: string): string {
 
 	const href = $(link).attr('href');
 	if (!href) throw new Error('Der Mittagsmenü-Link enthält keine PDF-URL.');
-	const url = new URL(href, websiteUrl);
+	const url = new URL(href, source.url);
 	if (
 		url.protocol !== 'https:' ||
 		!['bindaas.de', 'www.bindaas.de'].includes(url.hostname.toLowerCase()) ||
@@ -58,17 +57,6 @@ export function findBindaasMenuUrl(html: string): string {
 		throw new Error('Der Mittagsmenü-Link führt nicht zu einer erwarteten Bindaas-PDF-Datei.');
 	}
 	return url.toString();
-}
-
-function berlinDate(now: Date): string {
-	const parts = new Intl.DateTimeFormat('en-CA', {
-		timeZone: 'Europe/Berlin',
-		year: 'numeric',
-		month: '2-digit',
-		day: '2-digit'
-	}).formatToParts(now);
-	const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-	return `${values.year}-${values.month}-${values.day}`;
 }
 
 function currentWeek(now: Date): { validFrom: string; validUntil: string } {
@@ -209,7 +197,7 @@ export function parseBindaasMenuLines(lines: string[]): ImportedMenuItem[] {
 }
 
 export async function importBindaasMenu(now = new Date()) {
-	const pageResponse = await fetch(websiteUrl, {
+	const pageResponse = await fetch(source.url, {
 		headers: { 'user-agent': 'LunchMenuBot/1.0 (weekly public menu import)' },
 		signal: AbortSignal.timeout(20_000)
 	});
@@ -244,10 +232,10 @@ export async function importBindaasMenu(now = new Date()) {
 	}
 
 	return storeRestaurantMenus(
-		restaurant,
+		source,
 		pdfUrl,
 		[{ menuType: 'weekly', ...currentWeek(now), items }],
 		now.getTime(),
-		websiteUrl
+		source.url
 	);
 }
