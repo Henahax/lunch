@@ -70,7 +70,7 @@
 			<section class="grid gap-2" aria-labelledby="import-status-title">
 				<h3 id="import-status-title" class="text-sm font-semibold">Importstatus</h3>
 				{#each statuses as status (status.sourceSlug)}
-					<p class="text-xs opacity-60" aria-live="polite">
+					<p class="text-xs opacity-60">
 						<span class="font-medium">{status.restaurantName}:</span>
 						{#if status.lastError}
 							Aktualisierung fehlgeschlagen.

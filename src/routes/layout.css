@@ -366,6 +366,15 @@ details.restaurant-card[open] > .restaurant-card__external-link {
 	}
 }
 
+dialog:modal {
+	overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+	overflow: hidden;
+	overscroll-behavior: contain;
+}
+
 dialog.drawer {
 	opacity: 0;
 	transform: translateX(-100%);
