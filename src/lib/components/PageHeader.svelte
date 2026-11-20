@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		favoriteCount: number;
@@ -22,6 +23,31 @@
 		onOpenRestaurants,
 		onOpenInfo
 	}: Props = $props();
+
+	const infoHintSeenStorageKey = 'lunch.info-hint-seen.v1';
+	let infoHintPopover: HTMLDivElement;
+
+	function dismissInfoHint() {
+		infoHintPopover?.hidePopover();
+		try {
+			localStorage.setItem(infoHintSeenStorageKey, 'true');
+		} catch {
+			// The hint stays hidden for this page view because localStorage is unavailable.
+		}
+	}
+
+	onMount(() => {
+		try {
+			if (
+				localStorage.getItem(infoHintSeenStorageKey) !== 'true' &&
+				typeof infoHintPopover?.showPopover === 'function'
+			) {
+				infoHintPopover.showPopover();
+			}
+		} catch {
+			if (typeof infoHintPopover?.showPopover === 'function') infoHintPopover.showPopover();
+		}
+	});
 </script>
 
 <header
@@ -71,12 +97,40 @@
 		<span>({visibleRestaurantCount}/{totalRestaurantCount})</span>
 	</button>
 
-	<button
-		type="button"
-		onclick={onOpenInfo}
-		class="ui-button order-4 inline-flex size-10 items-center justify-center rounded border p-0 lg:order-5"
-		aria-label="Informationen anzeigen"
-	>
-		<i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-	</button>
+	<div class="relative order-4 justify-self-end lg:order-5">
+		<div
+			bind:this={infoHintPopover}
+			id="info-hint"
+			popover="manual"
+			class="info-hint mb-2 w-52 rounded-lg border p-3 text-left text-sm shadow-lg"
+			role="dialog"
+			aria-labelledby="info-hint-title"
+		>
+			<h2 id="info-hint-title" class="font-semibold">Hinweise zur Seite</h2>
+			<p class="mt-1">Hier findest du Hinweise zu Menüs und Funktionen.</p>
+			<button
+				type="button"
+				class="mt-2 rounded text-left font-semibold underline decoration-dotted underline-offset-2"
+				popovertarget="info-hint"
+				popovertargetaction="hide"
+				onclick={dismissInfoHint}
+			>
+				Verstanden
+			</button>
+		</div>
+		<button
+			type="button"
+			popovertarget="info-hint"
+			popovertargetaction="hide"
+			onclick={() => {
+				dismissInfoHint();
+				onOpenInfo();
+			}}
+			class="ui-button info-button-anchor inline-flex size-10 items-center justify-center rounded border p-0"
+			aria-label="Informationen anzeigen"
+			aria-controls="info-hint"
+		>
+			<i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+		</button>
+	</div>
 </header>

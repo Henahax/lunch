@@ -38,7 +38,9 @@
 		<header class="drawer-header flex items-start justify-between gap-4 border-b p-5">
 			<div>
 				<h2 id="favorites-title" class="text-2xl font-semibold">Lieblingsgerichte</h2>
-				<p class="mt-2 text-sm">Treffer werden in den aktuellen Karten markiert.</p>
+				<p class="mt-2 text-sm">
+					Treffer in den Karten markieren, Glocke für Erinnerungen aktivieren.
+				</p>
 			</div>
 			<button
 				type="button"
@@ -93,10 +95,7 @@
 				Weiteres Gericht hinzufügen
 			</button>
 			<p class="text-sm">
-				Die Favoriten werden nur in diesem Browser gespeichert. Schreibweisen mit oder ohne Umlaute
-				werden beim Abgleich vereinheitlicht. Aktivierte Erinnerungen erscheinen ab 11 Uhr bis 20
-				Uhr, wenn diese Seite geöffnet ist. Beim späteren Öffnen werden passende Hinweise noch am
-				selben Tag nachgeholt.
+				Nur in diesem Browser gespeichert. Erinnerungen erscheinen zwischen 11 und 20 Uhr.
 			</p>
 			{#if favoritesStorageWarning}
 				<p class="text-sm" role="status">{favoritesStorageWarning}</p>

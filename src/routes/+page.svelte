@@ -159,6 +159,10 @@
 		}
 	}
 
+	function openInfo() {
+		infoDialog?.showModal();
+	}
+
 	function persistFavoriteReminders() {
 		try {
 			localStorage.setItem(
@@ -541,7 +545,7 @@
 		dateLabel={formatDate(todayDate)}
 		onOpenFavorites={() => favoriteDialog?.showModal()}
 		onOpenRestaurants={() => restaurantDialog?.showModal()}
-		onOpenInfo={() => infoDialog?.showModal()}
+		onOpenInfo={openInfo}
 	/>
 
 	<main class="flex min-w-0 flex-1 flex-col gap-2 p-2">

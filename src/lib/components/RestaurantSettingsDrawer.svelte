@@ -53,8 +53,7 @@
 					Angezeigte Imbisse & Restaurants
 				</h2>
 				<p class="mt-2 text-sm">
-					Ziehe Imbisse & Restaurants zum Sortieren oder nutze die Pfeile. Mit dem Häkchen blendest
-					du sie auf der Hauptseite ein oder aus.
+					Zum Sortieren ziehen oder Pfeile nutzen. Häkchen zeigt oder verbirgt Restaurants.
 				</p>
 			</div>
 			<button
@@ -107,9 +106,6 @@
 					</li>
 				{/each}
 			</ol>
-			<p class="text-sm">
-				Reihenfolge und Sichtbarkeit werden ein Jahr lang in Cookies dieses Browsers gespeichert.
-			</p>
 		</div>
 	</div>
 </dialog>

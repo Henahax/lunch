@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import type { RestaurantImportStatus } from '#lib/types.js';
 
 	interface Props {
@@ -46,23 +46,9 @@
 			<section class="grid gap-3" aria-labelledby="app-help-title">
 				<h3 id="app-help-title" class="text-lg font-semibold">So funktioniert die Seite</h3>
 				<ul class="list-disc space-y-2 pl-5">
-					<li>
-						Tages- und Wochenangebote je Restaurant ansehen; Links führen zur Originalseite. Die
-						Karten werden jeden vormittag aktualisiert.
-					</li>
-					<li>
-						Lieblingsgerichte markieren passende Einträge. Über die Glocke gibt es Erinnerungen von
-						11 bis 20 Uhr, solange die Seite geöffnet ist; verpasste Hinweise werden am selben Tag
-						nachgeholt.
-					</li>
-					<li>
-						Restaurants ein- oder ausblenden und per Ziehen oder Pfeilen sortieren. Die Auswahl
-						bleibt ein Jahr in diesem Browser gespeichert.
-					</li>
-					<li>
-						Mobile und Desktop Bedienung unterscheiden sich ein wenig um der verfügbaren
-						Anzeigeplatz besser zu nutzen.
-					</li>
+					<li>Tages- und Wochenangebote ansehen, Links zu Originalseiten.</li>
+					<li>Lieblingsgerichte markieren und erinnern lassen.</li>
+					<li>Restaurants einblenden und sortieren.</li>
 					<li>Wünsche und Feedback gerne an Tobias richten.</li>
 				</ul>
 			</section>
@@ -73,23 +59,20 @@
 					<p class="text-xs opacity-60">
 						<span class="font-medium">{status.restaurantName}:</span>
 						{#if status.lastError}
-							Aktualisierung fehlgeschlagen.
-							{#if currentMenuSlugs.includes(status.sourceSlug)}
-								Die aktuelle Karte bleibt aus dem letzten erfolgreichen Import sichtbar.
-							{:else}
-								Das aktuelle Menü liegt noch nicht vor.
-							{/if}
-							Letzter erfolgreicher Import:
-							{status.lastSuccessAt ? formatDateTime(status.lastSuccessAt) : 'noch keiner'}.
+							Import fehlgeschlagen; {#if currentMenuSlugs.includes(status.sourceSlug)}letzter Stand{:else}keine
+								Karte{/if}.
+							{#if status.lastSuccessAt}Zuletzt erfolgreich: {formatDateTime(
+									status.lastSuccessAt
+								)}.{/if}
 						{:else if status.lastSuccessAt}
 							{#if isStale(status.lastSuccessAt)}
-								Daten möglicherweise veraltet; letzter erfolgreicher Import:
+								Möglicherweise veraltet; zuletzt:
 							{:else}
-								Zuletzt erfolgreich aktualisiert:
+								Aktualisiert:
 							{/if}
 							{formatDateTime(status.lastSuccessAt)}.
 						{:else}
-							Import läuft oder wurde noch nicht erfolgreich abgeschlossen.
+							Noch kein erfolgreicher Import.
 						{/if}
 					</p>
 				{:else}
