@@ -48,7 +48,7 @@
 		if (!dailyCarousel) return;
 		dailyCarousel.scrollBy({
 			left: direction * dailyCarousel.clientWidth * 0.9,
-			behavior: 'smooth'
+			behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
 		});
 	}
 

@@ -103,6 +103,51 @@ body {
 		0 0 0.75rem -0.0625rem color-mix(in srgb, var(--color-primary-light) 45%, transparent);
 }
 
+.info-hint {
+	display: none;
+	border-color: var(--color-accent);
+	background-color: var(--color-surface);
+	color: var(--color-text);
+}
+
+.info-hint:is(:popover-open, .\:popover-open) {
+	display: block;
+}
+
+@supports (position-area: block-end) {
+	.info-hint {
+		position: fixed;
+		position-anchor: --info-button;
+		position-area: block-end span-inline-end;
+		position-try-fallbacks:
+			flip-block,
+			flip-inline,
+			flip-block flip-inline;
+		inset: auto;
+		margin: 0.5rem 0 0;
+		max-inline-size: calc(100vw - 1rem);
+	}
+}
+
+@supports not (position-area: block-end) {
+	.info-hint {
+		position: fixed;
+		inset: 4.5rem 0.5rem auto auto;
+		margin: 0;
+		max-inline-size: calc(100vw - 1rem);
+	}
+}
+
+.info-button-anchor {
+	anchor-name: --info-button;
+}
+
+#info-hint:popover-open ~ .info-button-anchor {
+	border-color: var(--color-accent);
+	color: var(--color-accent);
+	box-shadow: 0 0 0 0.1875rem color-mix(in srgb, var(--color-accent) 45%, transparent);
+}
+
 .ui-input {
 	border-color: var(--color-border);
 	background-color: var(--color-background);
@@ -364,6 +409,15 @@ details.restaurant-card[open] > .restaurant-card__external-link {
 	details[open]::details-content {
 		block-size: auto;
 	}
+}
+
+dialog:modal {
+	overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+	overflow: hidden;
+	overscroll-behavior: contain;
 }
 
 dialog.drawer {
