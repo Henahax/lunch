@@ -34,13 +34,13 @@
 	class="restaurant-card relative min-w-0 rounded-lg border"
 >
 	<summary
-		class="restaurant-card__summary flex cursor-pointer flex-wrap items-center gap-1 px-2 py-1 pr-12 text-xl font-bold"
+		class="restaurant-card__summary flex cursor-pointer items-center gap-1 px-2 py-1 pr-12 text-xl font-bold"
 	>
-		<h3 class="inline">{restaurant.restaurantName}</h3>
+		<h3 class="min-w-0 flex-1 truncate">{restaurant.restaurantName}</h3>
 		{#if isStale}
-			<span class="stale-menu-badge ml-2">
+			<span class="stale-menu-badge ml-auto shrink-0">
 				<i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
-				<span>Vorwoche · nicht aktuell</span>
+				<span>Vorwoche</span>
 			</span>
 		{/if}
 	</summary>
