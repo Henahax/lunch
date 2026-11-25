@@ -225,27 +225,27 @@ details.restaurant-card[open] > .restaurant-card__summary::before {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.35rem;
-	border: 1px solid var(--color-border);
+	border: 1px solid color-mix(in srgb, var(--color-highlight) 65%, var(--color-border));
 	border-radius: 0.25rem;
 	padding: 0.125rem 0.4rem;
-	background-color: var(--color-surface-muted);
-	color: var(--color-text-muted);
+	background-color: color-mix(in srgb, var(--color-highlight) 14%, var(--color-surface-muted));
+	color: var(--color-highlight);
 	font-size: 0.75rem;
 	font-weight: 600;
 	line-height: 1.2;
 }
 
 .stale-menu-date {
-	border: 1px solid color-mix(in srgb, var(--color-secondary) 70%, transparent);
+	border: 1px solid color-mix(in srgb, var(--color-highlight) 55%, transparent);
 	border-radius: 0.2rem;
 	padding: 0.1rem 0.35rem;
-	background-color: var(--color-surface-muted);
-	color: var(--color-text-muted);
+	background-color: color-mix(in srgb, var(--color-highlight) 14%, var(--color-surface-muted));
+	color: var(--color-highlight);
 	font-weight: 600;
 }
 
 .stale-menu-age {
-	color: var(--color-text-muted);
+	color: var(--color-highlight);
 	font-size: 0.7rem;
 	font-weight: 600;
 }
