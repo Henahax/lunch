@@ -42,6 +42,10 @@ function normalizeLabel(value: string): string {
 		SALAT: 'Salat'
 	};
 	if (labels[compact]) return labels[compact];
+	const spacedVegetarianCategory = cleanText(value).match(
+		/^V\s*e\s*g\s*e\s*t\s*a\s*r\s*i\s*s\s*c\s*h\s*\/\s*F\s*i\s*s\s*c\s*h$/i
+	);
+	if (spacedVegetarianCategory) return 'Vegetarisch / Fisch';
 	if (/^V\s*e\s*g\s*e\s*t\s*a\s*r\s*i\s*s\s*c\s*h\s*:/i.test(value)) {
 		return value.replace(/^V\s*e\s*g\s*e\s*t\s*a\s*r\s*i\s*s\s*c\s*h\s*:/i, 'Vegetarisch:');
 	}
@@ -167,11 +171,21 @@ function parseMenuLines(
 		}
 
 		if (dayIndex !== undefined) {
-			if (line === 'Mit Fleisch' || line === 'Vegan' || line === 'Vegetarisch') {
+			if (
+				line === 'Mit Fleisch' ||
+				line === 'Vegan' ||
+				line === 'Vegetarisch' ||
+				line === 'Vegetarisch / Fisch'
+			) {
 				dailyCategory = line;
 				continue;
 			}
 			if (dailyCategory && !/^Tagesgerichte$/i.test(line)) {
+				const previousItem = dayItems[dayIndex].at(-1);
+				if (line.startsWith('(') && previousItem?.category === dailyCategory) {
+					previousItem.description = cleanText(`${previousItem.description} ${line}`);
+					continue;
+				}
 				dayItems[dayIndex].push({
 					code: '',
 					category: dailyCategory,
